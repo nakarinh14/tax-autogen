@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;">
                 <div style="flex:1;">
-                    <div style="font-weight:700;font-size:${fs * 1.1}px;margin-bottom:4px;">${config.compName}</div>
+                    <div style="font-weight:700;font-size:${fs * 1.3}px;margin-bottom:4px;">${config.compName}</div>
                     <div>${config.compAddr.replace(/\n/g, '<br>')}</div>
                     <div>เลขประจำตัวผู้เสียภาษี: ${config.compTax}</div>
                     <div>สาขา: ${config.compBranch}</div>
