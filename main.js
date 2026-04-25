@@ -1,6 +1,110 @@
 // main.js
 
+const translations = {
+    en: {
+        app_title: "Tax Invoice Auto-Gen",
+        app_desc: "Smart PDF generator to strictly match target sales sums.",
+        company_details: "Company Details",
+        your_info: "(Your Info)",
+        comp_name: "Company Name",
+        comp_tax: "Tax ID",
+        comp_addr: "Address",
+        comp_branch: "Branch (optional)",
+        comp_phone: "Phone Number (optional)",
+        customer_details: "Customer Details",
+        buyer_info: "(Buyer Info)",
+        cust_name: "Customer Name",
+        cust_tax: "Tax ID (optional)",
+        cust_addr: "Address (optional)",
+        gen_settings: "Generation Settings",
+        start_date: "Start Date",
+        end_date: "End Date",
+        target_money: "Target Money (Baht)",
+        amount_type: "Amount Type",
+        type_inc: "Includes VAT (ราคารวมภาษีแล้ว)",
+        type_exc: "Excludes VAT (ราคายังไม่รวมภาษี)",
+        vat_rate: "VAT Rate (%)",
+        max_qty: "Max Items Per Day",
+        paper_size: "Paper Size",
+        use_date_inv: "Use Date for Inv No. (TX-YYYYMMDD)",
+        start_inv_num: "Starting Invoice No. (Override)",
+        req_daily: "Require daily invoice",
+        hide_vat: "Hide VAT (ไม่แสดงภาษี)",
+        fixed_item_list: "Fixed Item List",
+        btn_add_item: "+ Add Item",
+        th_item_desc: "Item Description",
+        th_unit_price: "Unit Price (Baht)",
+        helper_price: 'Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).',
+        btn_generate: "Generate Invoices",
+        status_processing: "Processing...",
+        lang_btn: "🇺🇸 EN"
+    },
+    th: {
+        app_title: "โปรแกรมสร้างใบกำกับภาษีอัตโนมัติ",
+        app_desc: "สร้าง PDF อัจฉริยะที่คำนวณยอดขายให้ตรงกับเป้าหมาย",
+        company_details: "ข้อมูลบริษัท",
+        your_info: "(ข้อมูลของคุณ)",
+        comp_name: "ชื่อบริษัท",
+        comp_tax: "เลขประจำตัวผู้เสียภาษี",
+        comp_addr: "ที่อยู่",
+        comp_branch: "สาขา (ไม่บังคับ)",
+        comp_phone: "เบอร์โทรศัพท์ (ไม่บังคับ)",
+        customer_details: "ข้อมูลลูกค้า",
+        buyer_info: "(ข้อมูลผู้ซื้อ)",
+        cust_name: "ชื่อลูกค้า",
+        cust_tax: "เลขประจำตัวผู้เสียภาษี (ไม่บังคับ)",
+        cust_addr: "ที่อยู่ (ไม่บังคับ)",
+        gen_settings: "ตั้งค่าการสร้างเอกสาร",
+        start_date: "วันที่เริ่มต้น",
+        end_date: "วันที่สิ้นสุด",
+        target_money: "ยอดเงินเป้าหมาย (บาท)",
+        amount_type: "ประเภทจำนวนเงิน",
+        type_inc: "ราคารวมภาษีแล้ว (Includes VAT)",
+        type_exc: "ราคายังไม่รวมภาษี (Excludes VAT)",
+        vat_rate: "อัตราภาษีมูลค่าเพิ่ม (%)",
+        max_qty: "จำนวนรายการสูงสุดต่อวัน",
+        paper_size: "ขนาดกระดาษ",
+        use_date_inv: "ใช้วันที่เป็นเลขที่ใบกำกับ (TX-YYYYMMDD)",
+        start_inv_num: "เลขที่ใบกำกับเริ่มต้น (กำหนดเอง)",
+        req_daily: "ต้องมีใบกำกับทุกวัน",
+        hide_vat: "ซ่อนภาษี (ไม่แสดงภาษี)",
+        fixed_item_list: "รายการสินค้า",
+        btn_add_item: "+ เพิ่มรายการ",
+        th_item_desc: "รายละเอียดสินค้า",
+        th_unit_price: "ราคาต่อหน่วย (บาท)",
+        helper_price: 'ราคาควรสอดคล้องกับ "ประเภทจำนวนเงิน" (หากรวมภาษีแล้ว ราคาที่ระบุต้องรวมภาษีด้วย)',
+        btn_generate: "สร้างใบกำกับภาษี",
+        status_processing: "กำลังประมวลผล...",
+        lang_btn: "🇹🇭 TH"
+    }
+};
+
+let currentLang = navigator.language.toLowerCase().startsWith('th') ? 'th' : 'en';
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang][key]) {
+            el.innerHTML = translations[currentLang][key];
+        }
+    });
+    const btnToggle = document.getElementById('btn-lang-toggle');
+    if (btnToggle) {
+        btnToggle.innerText = translations[currentLang].lang_btn;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    applyTranslations();
+
+    const btnLangToggle = document.getElementById('btn-lang-toggle');
+    if (btnLangToggle) {
+        btnLangToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'th' : 'en';
+            applyTranslations();
+        });
+    }
+
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);

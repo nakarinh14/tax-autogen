@@ -17,51 +17,54 @@
     <div class="blob blob-3"></div>
 
     <main class="container">
-        <header class="header">
-            <h1>Tax Invoice Auto-Gen</h1>
-            <p>Smart PDF generator to strictly match target sales sums.</p>
+        <header class="header" style="position: relative;">
+            <div style="position: absolute; top: 0; right: 0;">
+                <button type="button" id="btn-lang-toggle" class="btn btn-secondary btn-sm">🇺🇸 EN</button>
+            </div>
+            <h1 data-i18n="app_title">Tax Invoice Auto-Gen</h1>
+            <p data-i18n="app_desc">Smart PDF generator to strictly match target sales sums.</p>
         </header>
 
         <form id="generator-form">
             <div class="grid-2">
                 <!-- Company Details -->
                 <section class="card glass">
-                    <h2>Company Details <span class="subtitle">(Your Info)</span></h2>
+                    <h2><span data-i18n="company_details">Company Details</span> <span class="subtitle" data-i18n="your_info">(Your Info)</span></h2>
                     <div class="form-group">
-                        <label for="comp-name">Company Name</label>
+                        <label for="comp-name" data-i18n="comp_name">Company Name</label>
                         <input type="text" id="comp-name" required placeholder="e.g. บริษัท ตัวอย่าง จำกัด">
                     </div>
                     <div class="form-group">
-                        <label for="comp-tax">Tax ID</label>
+                        <label for="comp-tax" data-i18n="comp_tax">Tax ID</label>
                         <input type="text" id="comp-tax" required placeholder="13-digit Tax ID">
                     </div>
                     <div class="form-group">
-                        <label for="comp-addr">Address</label>
+                        <label for="comp-addr" data-i18n="comp_addr">Address</label>
                         <textarea id="comp-addr" rows="2" required placeholder="Full company address..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="comp-branch">Branch (optional)</label>
+                        <label for="comp-branch" data-i18n="comp_branch">Branch (optional)</label>
                         <input type="text" id="comp-branch" placeholder="e.g. สำนักงานใหญ่">
                     </div>
                     <div class="form-group">
-                        <label for="comp-phone">Phone Number (optional)</label>
+                        <label for="comp-phone" data-i18n="comp_phone">Phone Number (optional)</label>
                         <input type="tel" id="comp-phone" placeholder="e.g. 02-123-4567">
                     </div>
                 </section>
 
                 <!-- Customer Details -->
                 <section class="card glass">
-                    <h2>Customer Details <span class="subtitle">(Buyer Info)</span></h2>
+                    <h2><span data-i18n="customer_details">Customer Details</span> <span class="subtitle" data-i18n="buyer_info">(Buyer Info)</span></h2>
                     <div class="form-group">
-                        <label for="cust-name">Customer Name</label>
+                        <label for="cust-name" data-i18n="cust_name">Customer Name</label>
                         <input type="text" id="cust-name" required placeholder="e.g. ลูกค้าทั่วไป หรือ บริษัท...">
                     </div>
                     <div class="form-group">
-                        <label for="cust-tax">Tax ID (optional)</label>
+                        <label for="cust-tax" data-i18n="cust_tax">Tax ID (optional)</label>
                         <input type="text" id="cust-tax" placeholder="13-digit Tax ID">
                     </div>
                     <div class="form-group">
-                        <label for="cust-addr">Address (optional)</label>
+                        <label for="cust-addr" data-i18n="cust_addr">Address (optional)</label>
                         <textarea id="cust-addr" rows="2" placeholder="Customer address..."></textarea>
                     </div>
                 </section>
@@ -69,37 +72,37 @@
 
             <!-- Settings -->
             <section class="card glass mt-6">
-                <h2>Generation Settings</h2>
+                <h2 data-i18n="gen_settings">Generation Settings</h2>
                 <div class="grid-3">
                     <div class="form-group">
-                        <label for="date-start">Start Date</label>
+                        <label for="date-start" data-i18n="start_date">Start Date</label>
                         <input type="text" id="date-start" required placeholder="DD/MM/YYYY">
                     </div>
                     <div class="form-group">
-                        <label for="date-end">End Date</label>
+                        <label for="date-end" data-i18n="end_date">End Date</label>
                         <input type="text" id="date-end" required placeholder="DD/MM/YYYY">
                     </div>
                     <div class="form-group">
-                        <label for="target-money">Target Money (Baht)</label>
+                        <label for="target-money" data-i18n="target_money">Target Money (Baht)</label>
                         <input type="number" id="target-money" step="0.01" min="1" required placeholder="e.g. 100000">
                     </div>
                     <div class="form-group">
-                        <label for="target-type">Amount Type</label>
+                        <label for="target-type" data-i18n="amount_type">Amount Type</label>
                         <select id="target-type">
-                            <option value="inclusive">Includes VAT (ราคารวมภาษีแล้ว)</option>
-                            <option value="exclusive">Excludes VAT (ราคายังไม่รวมภาษี)</option>
+                            <option value="inclusive" data-i18n="type_inc">Includes VAT (ราคารวมภาษีแล้ว)</option>
+                            <option value="exclusive" data-i18n="type_exc">Excludes VAT (ราคายังไม่รวมภาษี)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="vat-rate">VAT Rate (%)</label>
+                        <label for="vat-rate" data-i18n="vat_rate">VAT Rate (%)</label>
                         <input type="number" id="vat-rate" value="7" step="1" required>
                     </div>
                     <div class="form-group">
-                        <label for="max-qty">Max Items Per Day</label>
-                        <input type="number" id="max-qty" value="5" min="1" required title="Maximum total quantity of items per single day.">
+                        <label for="max-qty" data-i18n="max_qty">Max Items Per Day</label>
+                        <input type="number" id="max-qty" value="100" min="1" required title="Maximum total quantity of items per single day.">
                     </div>
                     <div class="form-group">
-                        <label for="paper-size">Paper Size</label>
+                        <label for="paper-size" data-i18n="paper_size">Paper Size</label>
                         <select id="paper-size">
                             <option value="a5" selected>A5 (148 × 210 mm)</option>
                             <option value="a4">A4 (210 × 297 mm)</option>
@@ -107,20 +110,20 @@
                     </div>
                     <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
                         <input type="checkbox" id="use-date-inv" checked>
-                        <label for="use-date-inv" style="margin: 0 0 0 0.5rem; cursor: pointer;">Use Date for Inv No. (TX-YYYYMMDD)</label>
+                        <label for="use-date-inv" style="margin: 0 0 0 0.5rem; cursor: pointer;" data-i18n="use_date_inv">Use Date for Inv No. (TX-YYYYMMDD)</label>
                     </div>
                     <div class="form-group">
-                        <label for="inv-start-num">Starting Invoice No. (Override)</label>
+                        <label for="inv-start-num" data-i18n="start_inv_num">Starting Invoice No. (Override)</label>
                         <input type="number" id="inv-start-num" value="200001" min="1" disabled title="The number used for the first invoice. e.g. 200001 → TX-200001">
                         <small class="helper-text" style="display:block;margin-top:4px;">Prefix: TX-&nbsp;&nbsp;e.g. 200001 → <strong>TX-200001</strong></small>
                     </div>
                     <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
                         <input type="checkbox" id="require-daily" checked>
-                        <label for="require-daily" style="margin: 0 0 0 0.5rem; cursor: pointer;">Require daily invoice</label>
+                        <label for="require-daily" style="margin: 0 0 0 0.5rem; cursor: pointer;" data-i18n="req_daily">Require daily invoice</label>
                     </div>
                     <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
                         <input type="checkbox" id="hide-vat" checked>
-                        <label for="hide-vat" style="margin: 0 0 0 0.5rem; cursor: pointer;">Hide VAT (ไม่แสดงภาษี)</label>
+                        <label for="hide-vat" style="margin: 0 0 0 0.5rem; cursor: pointer;" data-i18n="hide_vat">Hide VAT (ไม่แสดงภาษี)</label>
                     </div>
                 </div>
             </section>
@@ -128,15 +131,15 @@
             <!-- Fixed Items -->
             <section class="card glass mt-6">
                 <div class="flex-between">
-                    <h2>Fixed Item List</h2>
-                    <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm">+ Add Item</button>
+                    <h2 data-i18n="fixed_item_list">Fixed Item List</h2>
+                    <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm" data-i18n="btn_add_item">+ Add Item</button>
                 </div>
                 <div class="table-container mt-4">
                     <table class="items-table" id="items-table">
                         <thead>
                             <tr>
-                                <th>Item Description</th>
-                                <th width="150">Unit Price (Baht)</th>
+                                <th data-i18n="th_item_desc">Item Description</th>
+                                <th width="150" data-i18n="th_unit_price">Unit Price (Baht)</th>
                                 <th width="60"></th>
                             </tr>
                         </thead>
@@ -145,17 +148,17 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="helper-text mt-2">Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).</p>
+                <p class="helper-text mt-2" data-i18n="helper_price">Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).</p>
             </section>
 
             <!-- Actions -->
             <div class="actions mt-8">
-                <button type="submit" id="btn-generate" class="btn btn-primary btn-lg">Generate Invoices</button>
+                <button type="submit" id="btn-generate" class="btn btn-primary btn-lg" data-i18n="btn_generate">Generate Invoices</button>
             </div>
 
             <div id="status-container" class="status-box hidden mt-6 glass">
                 <div class="progress-info">
-                    <span id="status-text">Processing...</span>
+                    <span id="status-text" data-i18n="status_processing">Processing...</span>
                     <span id="status-pct">0%</span>
                 </div>
                 <div class="progress-bar">
