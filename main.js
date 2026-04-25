@@ -1,9 +1,34 @@
 // main.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    flatpickr("#date-start", { 
+        dateFormat: "d/m/Y",
+        defaultDate: firstDay 
+    });
+    flatpickr("#date-end", { 
+        dateFormat: "d/m/Y",
+        defaultDate: lastDay 
+    });
+
     const form = document.getElementById('generator-form');
     const itemsTbody = document.getElementById('items-tbody');
     const btnAddItem = document.getElementById('btn-add-item');
+
+    const useDateInv = document.getElementById('use-date-inv');
+    const invStartNum = document.getElementById('inv-start-num');
+
+    useDateInv.addEventListener('change', (e) => {
+        invStartNum.disabled = e.target.checked;
+        if (!e.target.checked) {
+            invStartNum.required = true;
+        } else {
+            invStartNum.required = false;
+        }
+    });
 
     const statusContainer = document.getElementById('status-container');
     const statusText = document.getElementById('status-text');
@@ -37,6 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         // Harvest inputs
+        const parseDateString = (dateStr) => {
+            const [dd, mm, yyyy] = dateStr.split('/');
+            return new Date(yyyy, mm - 1, dd);
+        };
+
         const config = {
             compName: document.getElementById('comp-name').value,
             compTax: document.getElementById('comp-tax').value,
@@ -46,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
             custName: document.getElementById('cust-name').value,
             custTax: document.getElementById('cust-tax').value,
             custAddr: document.getElementById('cust-addr').value,
-            startDate: new Date(document.getElementById('date-start').value),
-            endDate: new Date(document.getElementById('date-end').value),
+            startDate: parseDateString(document.getElementById('date-start').value),
+            endDate: parseDateString(document.getElementById('date-end').value),
             targetMoney: parseFloat(document.getElementById('target-money').value),
             targetType: document.getElementById('target-type').value, // 'inclusive' or 'exclusive'
             vatRate: parseFloat(document.getElementById('vat-rate').value),
@@ -55,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             requireDaily: document.getElementById('require-daily').checked,
             hideVat: document.getElementById('hide-vat').checked,
             paperSize: document.getElementById('paper-size').value, // 'a3' or 'a4'
+            useDateInv: document.getElementById('use-date-inv').checked,
             invStartNum: parseInt(document.getElementById('inv-start-num').value),
             items: Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => ({
                 name: tr.querySelector('.item-name').value,
@@ -102,10 +133,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusText.innerText = `Generating PDF ${i + 1} of ${distributedLog.length}...`;
                 await new Promise(r => setTimeout(r, 10)); // Yield for UI
 
-                const invNumber = `TX-${invCounter}`;
+                let invNumber;
+                if (config.useDateInv) {
+                    const dateObj = new Date(config.startDate.getTime() + (i * 24 * 60 * 60 * 1000));
+                    const yyyy = dateObj.getFullYear();
+                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dd = String(dateObj.getDate()).padStart(2, '0');
+                    invNumber = `TX-${yyyy}${mm}${dd}`;
+                } else {
+                    invNumber = `TX-${invCounter}`;
+                    invCounter++;
+                }
+
                 const pdfBlob = await generateInvoicePDF(dayLog, config, config.startDate, i, invNumber);
                 zip.file(`${invNumber}.pdf`, pdfBlob);
-                invCounter++;
             }
 
             statusText.innerText = 'Zipping files...';

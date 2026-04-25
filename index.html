@@ -8,6 +8,7 @@
     <!-- Google Fonts for modern typography -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -72,11 +73,11 @@
                 <div class="grid-3">
                     <div class="form-group">
                         <label for="date-start">Start Date</label>
-                        <input type="date" id="date-start" required>
+                        <input type="text" id="date-start" required placeholder="DD/MM/YYYY">
                     </div>
                     <div class="form-group">
                         <label for="date-end">End Date</label>
-                        <input type="date" id="date-end" required>
+                        <input type="text" id="date-end" required placeholder="DD/MM/YYYY">
                     </div>
                     <div class="form-group">
                         <label for="target-money">Target Money (Baht)</label>
@@ -100,14 +101,17 @@
                     <div class="form-group">
                         <label for="paper-size">Paper Size</label>
                         <select id="paper-size">
-                            <option value="a3">A3 (297 × 420 mm)</option>
+                            <option value="a5" selected>A5 (148 × 210 mm)</option>
                             <option value="a4">A4 (210 × 297 mm)</option>
-                            <option value="a5">A5 (148 × 210 mm)</option>
                         </select>
                     </div>
+                    <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
+                        <input type="checkbox" id="use-date-inv" checked>
+                        <label for="use-date-inv" style="margin: 0 0 0 0.5rem; cursor: pointer;">Use Date for Inv No. (TX-YYYYMMDD)</label>
+                    </div>
                     <div class="form-group">
-                        <label for="inv-start-num">Starting Invoice Number</label>
-                        <input type="number" id="inv-start-num" value="200001" min="1" required title="The number used for the first invoice. e.g. 200001 → TX-200001">
+                        <label for="inv-start-num">Starting Invoice No. (Override)</label>
+                        <input type="number" id="inv-start-num" value="200001" min="1" disabled title="The number used for the first invoice. e.g. 200001 → TX-200001">
                         <small class="helper-text" style="display:block;margin-top:4px;">Prefix: TX-&nbsp;&nbsp;e.g. 200001 → <strong>TX-200001</strong></small>
                     </div>
                     <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
@@ -166,6 +170,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
     <script src="main.js"></script>
 </body>
