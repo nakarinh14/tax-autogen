@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('generator-form');
     const itemsTbody = document.getElementById('items-tbody');
     const btnAddItem = document.getElementById('btn-add-item');
-    
+
     const statusContainer = document.getElementById('status-container');
     const statusText = document.getElementById('status-text');
     const statusPct = document.getElementById('status-pct');
     const progressFill = document.getElementById('progress-fill');
-    
+
     // Add initial item row
     addItemRow('WIWU Case', 1000);
     addItemRow('Screen Protector', 500);
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         // Harvest inputs
         const config = {
             compName: document.getElementById('comp-name').value,
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Math Distribution
             const daysCount = Math.floor((config.endDate - config.startDate) / (1000 * 60 * 60 * 24)) + 1;
             const distributedLog = distributeMath(config, daysCount);
-            
+
             if (!distributedLog) {
                 throw new Error("Could not find an exact combination to meet the target money using only the provided item prices and max quantity limits. Tip: Ensure your Target Money is reachable by combining your exact item prices (e.g. they share a common divisor).");
             }
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Generate PDFs
             const zip = new JSZip();
             let invCounter = config.invStartNum;
-            
+
             for (let i = 0; i < distributedLog.length; i++) {
                 const dayLog = distributedLog[i];
                 if (dayLog.items.length === 0) continue; // Skip empty days
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pct = Math.round(((i + 1) / distributedLog.length) * 100);
                 statusPct.innerText = pct + '%';
                 progressFill.style.width = pct + '%';
-                statusText.innerText = `Generating PDF ${i+1} of ${distributedLog.length}...`;
+                statusText.innerText = `Generating PDF ${i + 1} of ${distributedLog.length}...`;
                 await new Promise(r => setTimeout(r, 10)); // Yield for UI
 
                 const invNumber = `TX-${invCounter}`;
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             statusText.innerText = 'Zipping files...';
-            const zipBlob = await zip.generateAsync({type: "blob"});
+            const zipBlob = await zip.generateAsync({ type: "blob" });
             saveAs(zipBlob, `Tax_Invoices_${config.startDate.toISOString().split('T')[0]}_to_${config.endDate.toISOString().split('T')[0]}.zip`);
 
             statusText.innerText = 'Done!';
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             let currentSum = 0;
             // State initialization
-            let days = Array.from({length: daysCount}, () => ({
+            let days = Array.from({ length: daysCount }, () => ({
                 items: [],
                 totalQty: 0
             }));
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (config.requireDaily) {
                 for (let d = 0; d < daysCount; d++) {
                     const randomItem = config.items[Math.floor(Math.random() * config.items.length)];
-                    days[d].items.push({...randomItem, qty: 1});
+                    days[d].items.push({ ...randomItem, qty: 1 });
                     days[d].totalQty += 1;
                     currentSum += randomItem.price;
                 }
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             while (Math.abs(currentSum - config.targetMoney) > 0.001) {
                 let rem = config.targetMoney - currentSum;
                 let validItems = config.items.filter(i => i.price <= rem + 0.001); // Handle float precision
-                
+
                 if (validItems.length === 0) {
                     stuck = true;
                     break;
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (extItem) {
                     extItem.qty += 1;
                 } else {
-                    days[dIdx].items.push({...item, qty: 1});
+                    days[dIdx].items.push({ ...item, qty: 1 });
                 }
                 days[dIdx].totalQty += 1;
                 currentSum += item.price;
@@ -214,12 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const fmt = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         // Paper dimensions
-        const paperPx  = { a3: [1122, 1587], a4: [794, 1123], a5: [559,  794] };
-        const paperMm  = { a3: [297,  420],  a4: [210,  297],  a5: [148,  210] };
+        const paperPx = { a3: [1122, 1587], a4: [794, 1123], a5: [559, 794] };
+        const paperMm = { a3: [297, 420], a4: [210, 297], a5: [148, 210] };
         const [pxW, pxH] = paperPx[config.paperSize];
         const [mmW, mmH] = paperMm[config.paperSize];
-        const pad  = Math.round(pxW * 0.05);
-        const fs   = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 10 : 13;
+        const pad = Math.round(pxW * 0.05);
+        const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 10 : 13;
 
         // Build item rows HTML
         const rowsHTML = dayLog.items.map((item, j) => {
@@ -273,12 +273,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <table style="width:100%;border-collapse:collapse;border:1px solid #bbb;">
                 <thead>
-                    <tr style="background:#222;color:#fff;">
-                        <th style="padding:9px 10px;text-align:center;width:7%;font-size:${fs * 0.8}px;">ลำดับ</th>
-                        <th style="padding:9px 10px;text-align:left;font-size:${fs * 0.8}px;">รายการ (Description)</th>
-                        <th style="padding:9px 10px;text-align:center;width:10%;font-size:${fs * 0.8}px;">จำนวน</th>
-                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.8}px;">ราคา/หน่วย (บาท)</th>
-                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.8}px;">จำนวนเงิน (บาท)</th>
+                    <tr>
+                        <th style="padding:9px 10px;text-align:center;width:7%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">ลำดับ</th>
+                        <th style="padding:9px 10px;text-align:left;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">รายการ (Description)</th>
+                        <th style="padding:9px 10px;text-align:center;width:10%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวน</th>
+                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">ราคา/หน่วย (บาท)</th>
+                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวนเงิน (บาท)</th>
                     </tr>
                 </thead>
                 <tbody>${rowsHTML}</tbody>
