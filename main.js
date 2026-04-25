@@ -79,7 +79,7 @@ const translations = {
     }
 };
 
-let currentLang = navigator.language.toLowerCase().startsWith('th') ? 'th' : 'en';
+let currentLang = (navigator.language || navigator.userLanguage || '').toLowerCase().startsWith('th') ? 'th' : 'en';
 
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
