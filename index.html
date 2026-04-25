@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Tax Invoice Generator</title>
+    <meta name="description" content="Generate daily tax invoices to match a specific target sum.">
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <main class="container">
+        <header class="header">
+            <h1>Tax Invoice Auto-Gen</h1>
+            <p>Smart PDF generator to strictly match target sales sums.</p>
+        </header>
+
+        <form id="generator-form">
+            <div class="grid-2">
+                <!-- Company Details -->
+                <section class="card glass">
+                    <h2>Company Details <span class="subtitle">(Your Info)</span></h2>
+                    <div class="form-group">
+                        <label for="comp-name">Company Name</label>
+                        <input type="text" id="comp-name" required placeholder="e.g. บริษัท ตัวอย่าง จำกัด">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-tax">Tax ID</label>
+                        <input type="text" id="comp-tax" required placeholder="13-digit Tax ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-addr">Address</label>
+                        <textarea id="comp-addr" rows="2" required placeholder="Full company address..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-branch">Branch (optional)</label>
+                        <input type="text" id="comp-branch" placeholder="e.g. สำนักงานใหญ่">
+                    </div>
+                </section>
+
+                <!-- Customer Details -->
+                <section class="card glass">
+                    <h2>Customer Details <span class="subtitle">(Buyer Info)</span></h2>
+                    <div class="form-group">
+                        <label for="cust-name">Customer Name</label>
+                        <input type="text" id="cust-name" required placeholder="e.g. ลูกค้าทั่วไป หรือ บริษัท...">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-tax">Tax ID (optional)</label>
+                        <input type="text" id="cust-tax" placeholder="13-digit Tax ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-addr">Address (optional)</label>
+                        <textarea id="cust-addr" rows="2" placeholder="Customer address..."></textarea>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Settings -->
+            <section class="card glass mt-6">
+                <h2>Generation Settings</h2>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="date-start">Start Date</label>
+                        <input type="date" id="date-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date-end">End Date</label>
+                        <input type="date" id="date-end" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="target-money">Target Money (Baht)</label>
+                        <input type="number" id="target-money" step="0.01" min="1" required placeholder="e.g. 100000">
+                    </div>
+                    <div class="form-group">
+                        <label for="target-type">Amount Type</label>
+                        <select id="target-type">
+                            <option value="inclusive">Includes VAT (ราคารวมภาษีแล้ว)</option>
+                            <option value="exclusive">Excludes VAT (ราคายังไม่รวมภาษี)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vat-rate">VAT Rate (%)</label>
+                        <input type="number" id="vat-rate" value="7" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="max-qty">Max Items Per Day</label>
+                        <input type="number" id="max-qty" value="5" min="1" required title="Maximum total quantity of items per single day.">
+                    </div>
+                    <div class="form-group">
+                        <label for="paper-size">Paper Size</label>
+                        <select id="paper-size">
+                            <option value="a3">A3 (297 × 420 mm)</option>
+                            <option value="a4">A4 (210 × 297 mm)</option>
+                            <option value="a5">A5 (148 × 210 mm)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-start-num">Starting Invoice Number</label>
+                        <input type="number" id="inv-start-num" value="200001" min="1" required title="The number used for the first invoice. e.g. 200001 → TX-200001">
+                        <small class="helper-text" style="display:block;margin-top:4px;">Prefix: TX-&nbsp;&nbsp;e.g. 200001 → <strong>TX-200001</strong></small>
+                    </div>
+                    <div class="form-group check-group" style="grid-column: span 2; display: flex; align-items: center; padding-top: 1.5rem;">
+                        <input type="checkbox" id="require-daily" checked>
+                        <label for="require-daily" style="margin: 0 0 0 0.5rem; cursor: pointer;">Require at least 1 invoice per day</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fixed Items -->
+            <section class="card glass mt-6">
+                <div class="flex-between">
+                    <h2>Fixed Item List</h2>
+                    <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm">+ Add Item</button>
+                </div>
+                <div class="table-container mt-4">
+                    <table class="items-table" id="items-table">
+                        <thead>
+                            <tr>
+                                <th>Item Description</th>
+                                <th width="150">Unit Price (Baht)</th>
+                                <th width="60"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="helper-text mt-2">Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).</p>
+            </section>
+
+            <!-- Actions -->
+            <div class="actions mt-8">
+                <button type="submit" id="btn-generate" class="btn btn-primary btn-lg">Generate Invoices</button>
+            </div>
+
+            <div id="status-container" class="status-box hidden mt-6 glass">
+                <div class="progress-info">
+                    <span id="status-text">Processing...</span>
+                    <span id="status-pct">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <script src="main.js"></script>
+</body>
+</html>
