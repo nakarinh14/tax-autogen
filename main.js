@@ -316,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
+
         document.body.appendChild(el);
         try {
             await document.fonts.ready; // Ensure Sarabun is loaded before capture
