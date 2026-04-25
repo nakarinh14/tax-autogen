@@ -106,9 +106,13 @@
                         <input type="number" id="inv-start-num" value="200001" min="1" required title="The number used for the first invoice. e.g. 200001 → TX-200001">
                         <small class="helper-text" style="display:block;margin-top:4px;">Prefix: TX-&nbsp;&nbsp;e.g. 200001 → <strong>TX-200001</strong></small>
                     </div>
-                    <div class="form-group check-group" style="grid-column: span 2; display: flex; align-items: center; padding-top: 1.5rem;">
+                    <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
                         <input type="checkbox" id="require-daily" checked>
-                        <label for="require-daily" style="margin: 0 0 0 0.5rem; cursor: pointer;">Require at least 1 invoice per day</label>
+                        <label for="require-daily" style="margin: 0 0 0 0.5rem; cursor: pointer;">Require daily invoice</label>
+                    </div>
+                    <div class="form-group check-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
+                        <input type="checkbox" id="hide-vat" checked>
+                        <label for="hide-vat" style="margin: 0 0 0 0.5rem; cursor: pointer;">Hide VAT (ไม่แสดงภาษี)</label>
                     </div>
                 </div>
             </section>

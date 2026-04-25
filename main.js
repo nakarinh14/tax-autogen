@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             vatRate: parseFloat(document.getElementById('vat-rate').value),
             maxQty: parseInt(document.getElementById('max-qty').value),
             requireDaily: document.getElementById('require-daily').checked,
+            hideVat: document.getElementById('hide-vat').checked,
             paperSize: document.getElementById('paper-size').value, // 'a3' or 'a4'
             invStartNum: parseInt(document.getElementById('inv-start-num').value),
             items: Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => ({
@@ -246,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         el.innerHTML = `
             <div style="text-align:center;margin-bottom:22px;">
-                <div style="font-size:${fs * 1.6}px;font-weight:700;letter-spacing:0.5px;">ใบกำกับภาษี / ใบเสร็จรับเงิน</div>
+                <div style="font-size:${fs * 1.6}px;font-weight:700;letter-spacing:0.5px;">ใบกำกับภาษีอย่างย่อ / ใบเสร็จรับเงิน</div>
                 <div style="font-size:${fs * 1.2}px;font-weight:600;letter-spacing:2px;">TAX INVOICE / RECEIPT</div>
             </div>
 
@@ -290,10 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">รวมเงิน (Sub Total):</td>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;min-width:150px;">${fmt(subtotal)} บาท</td>
                     </tr>
+                    ${!config.hideVat ? `
                     <tr>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${config.vatRate}%):</td>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">${fmt(vatAmt)} บาท</td>
                     </tr>
+                    ` : ''}
                     <tr style="background:#f0f0f0;">
                         <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">จำนวนเงินรวมทั้งสิ้น (Grand Total):</td>
                         <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">${fmt(grandTotal)} บาท</td>
