@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const [pxW, pxH] = paperPx[config.paperSize];
         const [mmW, mmH] = paperMm[config.paperSize];
         const pad = Math.round(pxW * 0.05);
-        const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 12 : 13;
+        const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 13 : 13;
 
         // Build item rows HTML
         const rowsHTML = dayLog.items.map((item, j) => {
