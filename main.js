@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
             compName: document.getElementById('comp-name').value,
             compTax: document.getElementById('comp-tax').value,
             compAddr: document.getElementById('comp-addr').value,
-            compBranch: document.getElementById('comp-branch').value || 'สำนักงานใหญ่',
+            compBranch: document.getElementById('comp-branch').value,
+            compPhone: document.getElementById('comp-phone') ? document.getElementById('comp-phone').value : '',
             custName: document.getElementById('cust-name').value,
             custTax: document.getElementById('cust-tax').value,
             custAddr: document.getElementById('cust-addr').value,
@@ -220,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const [pxW, pxH] = paperPx[config.paperSize];
         const [mmW, mmH] = paperMm[config.paperSize];
         const pad = Math.round(pxW * 0.05);
-        const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 10 : 13;
+        const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 12 : 13;
 
         // Build item rows HTML
         const rowsHTML = dayLog.items.map((item, j) => {
@@ -256,7 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-weight:700;font-size:${fs * 1.3}px;margin-bottom:4px;">${config.compName}</div>
                     <div>${config.compAddr.replace(/\n/g, '<br>')}</div>
                     <div>เลขประจำตัวผู้เสียภาษี: ${config.compTax}</div>
-                    <div>สาขา: ${config.compBranch}</div>
+                    ${config.compBranch ? `<div>สาขา: ${config.compBranch}</div>` : ''}
+                    ${config.compPhone ? `<div>โทร: ${config.compPhone}</div>` : ''}
                 </div>
                 <div style="border:1px solid #bbb;padding:12px 16px;border-radius:8px;text-align:right;min-width:210px;">
                     <div style="margin-bottom:4px;"><strong>เลขที่ (No.):</strong>&nbsp;${invNum}</div>
@@ -287,10 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="display:flex;justify-content:flex-end;margin-top:18px;">
                 <table style="border-collapse:collapse;">
+                    ${!config.hideVat ? `
                     <tr>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">รวมเงิน (Sub Total):</td>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;min-width:150px;">${fmt(subtotal)} บาท</td>
                     </tr>
+                    ` : ''}
                     ${!config.hideVat ? `
                     <tr>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${config.vatRate}%):</td>
@@ -298,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                     ` : ''}
                     <tr style="background:#f0f0f0;">
-                        <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">จำนวนเงินรวมทั้งสิ้น (Grand Total):</td>
+                        <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">จำนวนเงินรวมภาษีมูลค่าเพิ่มทั้งสื้น (Grand Total):</td>
                         <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">${fmt(grandTotal)} บาท</td>
                     </tr>
                 </table>
