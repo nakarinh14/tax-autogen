@@ -37,7 +37,10 @@ const translations = {
         helper_price: 'Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).',
         btn_generate: "Generate Invoices",
         status_processing: "Processing...",
-        lang_btn: "🇺🇸 EN"
+        lang_btn: "🇺🇸 EN",
+        adhoc_title: "Ad-hoc Invoices",
+        adhoc_desc: "One-off invoices for specific dates — excluded from the monthly target.",
+        btn_add_adhoc: "+ Add Ad-hoc Invoice"
     },
     th: {
         app_title: "โปรแกรมสร้างใบกำกับภาษีอัตโนมัติ",
@@ -75,7 +78,10 @@ const translations = {
         helper_price: 'ราคาควรสอดคล้องกับ "ประเภทจำนวนเงิน" (หากรวมภาษีแล้ว ราคาที่ระบุต้องรวมภาษีด้วย)',
         btn_generate: "สร้างใบกำกับภาษี",
         status_processing: "กำลังประมวลผล...",
-        lang_btn: "🇹🇭 TH"
+        lang_btn: "🇹🇭 TH",
+        adhoc_title: "ใบกำกับภาษีเพิ่มเติม",
+        adhoc_desc: "ใบกำกับภาษีสำหรับวันที่เฉพาะเจาะจง — ไม่รวมในยอดเป้าหมายรายเดือน",
+        btn_add_adhoc: "+ เพิ่มใบกำกับเพิ่มเติม"
     }
 };
 
@@ -95,6 +101,13 @@ function applyTranslations() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Disable scroll wheel from changing number input values
+    document.addEventListener('wheel', function(e) {
+        if (document.activeElement.type === 'number') {
+            document.activeElement.blur();
+        }
+    });
+
     applyTranslations();
 
     const btnLangToggle = document.getElementById('btn-lang-toggle');
@@ -144,6 +157,89 @@ document.addEventListener('DOMContentLoaded', () => {
     addItemRow('Screen Protector', 500);
 
     btnAddItem.addEventListener('click', () => addItemRow('', 0));
+
+    // --- Ad-hoc Invoice Management ---
+    let adhocCount = 0;
+    const adhocContainer = document.getElementById('adhoc-cards-container');
+    document.getElementById('btn-add-adhoc').addEventListener('click', () => addAdhocCard());
+
+    function addAdhocCard() {
+        adhocCount++;
+        const card = document.createElement('div');
+        card.className = 'adhoc-card';
+        card.style.cssText = 'border:1px solid rgba(245,158,11,0.4);border-left:4px solid #f59e0b;border-radius:12px;padding:1.4rem;margin-bottom:1.2rem;background:rgba(245,158,11,0.07);';
+        card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <strong style="color:#f59e0b;font-size:1rem;">Ad-hoc Invoice #${adhocCount}</strong>
+                <button type="button" class="btn btn-danger btn-sm adhoc-remove-btn">✕ Remove</button>
+            </div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Invoice Date</label>
+                    <input type="text" class="adhoc-date" placeholder="DD/MM/YYYY">
+                </div>
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" class="adhoc-cust-name" placeholder="Customer name">
+                </div>
+                <div class="form-group">
+                    <label>Customer Tax ID <small style="opacity:0.6">(optional)</small></label>
+                    <input type="text" class="adhoc-cust-tax" placeholder="Tax ID">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Customer Address <small style="opacity:0.6">(optional)</small></label>
+                <textarea class="adhoc-cust-addr" rows="2" placeholder="Address..."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label>VAT Rate (%)</label>
+                    <input type="number" class="adhoc-vat-rate" value="7" step="1" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Amount Type</label>
+                    <select class="adhoc-target-type">
+                        <option value="exclusive">Excludes VAT (ราคายังไม่รวมภาษี)</option>
+                        <option value="inclusive">Includes VAT (ราคารวมภาษีแล้ว)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0 0.5rem;">
+                <label style="margin:0;font-weight:600;">Items</label>
+                <button type="button" class="btn btn-secondary btn-sm adhoc-add-row-btn">+ Add Row</button>
+            </div>
+            <div class="table-container">
+                <table class="items-table">
+                    <thead><tr>
+                        <th>Description</th>
+                        <th width="80">Qty</th>
+                        <th width="150">Unit Price (Baht)</th>
+                        <th width="60"></th>
+                    </tr></thead>
+                    <tbody class="adhoc-items-tbody"></tbody>
+                </table>
+            </div>`;
+        card.querySelector('.adhoc-remove-btn').addEventListener('click', () => card.remove());
+        const tbody = card.querySelector('.adhoc-items-tbody');
+        card.querySelector('.adhoc-add-row-btn').addEventListener('click', () => addAdhocRow(tbody));
+        addAdhocRow(tbody);
+        flatpickr(card.querySelector('.adhoc-date'), { dateFormat: 'd/m/Y' });
+        adhocContainer.appendChild(card);
+    }
+
+    function addAdhocRow(tbody) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="adhoc-item-name" placeholder="Item description"></td>
+            <td><input type="number" class="adhoc-item-qty" value="1" min="1"></td>
+            <td><input type="number" class="adhoc-item-price" step="0.01" min="0" value="0"></td>
+            <td><button type="button" class="btn btn-danger btn-remove-item">✕</button></td>`;
+        tr.querySelector('.btn-remove-item').addEventListener('click', () => {
+            if (tbody.children.length > 1) tr.remove();
+            else alert('Must have at least one item.');
+        });
+        tbody.appendChild(tr);
+    }
 
     function addItemRow(name = '', price = 0) {
         const tr = document.createElement('tr');
@@ -223,33 +319,84 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Could not find an exact combination to meet the target money using only the provided item prices and max quantity limits. Tip: Ensure your Target Money is reachable by combining your exact item prices (e.g. they share a common divisor).");
             }
 
-            // 2. Generate PDFs
-            const zip = new JSZip();
-            let invCounter = config.invStartNum;
+            // 2. Prepare all invoice jobs
+            let invoiceJobs = [];
 
+            // Collect monthly invoices
             for (let i = 0; i < distributedLog.length; i++) {
                 const dayLog = distributedLog[i];
                 if (dayLog.items.length === 0) continue; // Skip empty days
 
-                const pct = Math.round(((i + 1) / distributedLog.length) * 100);
+                const jobDate = new Date(config.startDate.getTime() + (i * 24 * 60 * 60 * 1000));
+                invoiceJobs.push({
+                    date: jobDate,
+                    dayLog: dayLog,
+                    overrides: {}
+                });
+            }
+
+            // Collect ad-hoc invoices (excluded from monthly target)
+            const adhocCards = document.querySelectorAll('.adhoc-card');
+            for (let ai = 0; ai < adhocCards.length; ai++) {
+                const card = adhocCards[ai];
+                const dateVal = card.querySelector('.adhoc-date').value;
+                if (!dateVal) throw new Error(`Ad-hoc invoice #${ai + 1} is missing a date.`);
+                const adhocItems = Array.from(card.querySelectorAll('.adhoc-items-tbody tr')).map(row => ({
+                    name: row.querySelector('.adhoc-item-name').value,
+                    qty: parseInt(row.querySelector('.adhoc-item-qty').value) || 0,
+                    price: parseFloat(row.querySelector('.adhoc-item-price').value) || 0
+                })).filter(it => it.name && it.qty > 0 && it.price > 0);
+                if (adhocItems.length === 0) throw new Error(`Ad-hoc invoice #${ai + 1} has no valid items.`);
+                
+                invoiceJobs.push({
+                    date: parseDateString(dateVal),
+                    dayLog: { items: adhocItems },
+                    overrides: {
+                        custName: card.querySelector('.adhoc-cust-name').value,
+                        custTax: card.querySelector('.adhoc-cust-tax').value,
+                        custAddr: card.querySelector('.adhoc-cust-addr').value,
+                        vatRate: parseFloat(card.querySelector('.adhoc-vat-rate').value) || 0,
+                        targetType: card.querySelector('.adhoc-target-type').value
+                    }
+                });
+            }
+
+            // Sort all jobs chronologically by date
+            invoiceJobs.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+            // 3. Generate PDFs
+            const zip = new JSZip();
+            let invCounter = config.invStartNum;
+            let runningDateInvNum = null;
+
+            for (let i = 0; i < invoiceJobs.length; i++) {
+                const job = invoiceJobs[i];
+
+                const pct = Math.round(((i + 1) / invoiceJobs.length) * 100);
                 statusPct.innerText = pct + '%';
                 progressFill.style.width = pct + '%';
-                statusText.innerText = `Generating PDF ${i + 1} of ${distributedLog.length}...`;
+                statusText.innerText = `Generating PDF ${i + 1} of ${invoiceJobs.length}...`;
                 await new Promise(r => setTimeout(r, 10)); // Yield for UI
 
                 let invNumber;
                 if (config.useDateInv) {
-                    const dateObj = new Date(config.startDate.getTime() + (i * 24 * 60 * 60 * 1000));
-                    const yyyy = dateObj.getFullYear();
-                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const dd = String(dateObj.getDate()).padStart(2, '0');
-                    invNumber = `TX-${yyyy}${mm}${dd}`;
+                    const yyyy = job.date.getFullYear();
+                    const mm = String(job.date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(job.date.getDate()).padStart(2, '0');
+                    const dateAsNum = parseInt(`${yyyy}${mm}${dd}`, 10);
+                    
+                    if (runningDateInvNum === null || runningDateInvNum < dateAsNum) {
+                        runningDateInvNum = dateAsNum;
+                    }
+                    
+                    invNumber = `TX-${runningDateInvNum}`;
+                    runningDateInvNum++;
                 } else {
                     invNumber = `TX-${invCounter}`;
                     invCounter++;
                 }
 
-                const pdfBlob = await generateInvoicePDF(dayLog, config, config.startDate, i, invNumber);
+                const pdfBlob = await generateInvoicePDF(job.dayLog, config, job.date, 0, invNumber, job.overrides);
                 zip.file(`${invNumber}.pdf`, pdfBlob);
             }
 
@@ -341,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return null; // All retries stuck
     }
 
-    async function generateInvoicePDF(dayLog, config, startDate, dayOffset, invNum) {
+    async function generateInvoicePDF(dayLog, config, startDate, dayOffset, invNum, overrides = {}) {
+        const effectiveConfig = { ...config, ...overrides };
         // Compute invoice date
         const dateObj = new Date(startDate.getTime() + (dayOffset * 24 * 60 * 60 * 1000));
         const dtStr = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
@@ -349,13 +497,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Financials
         const grandTotalItemsValue = dayLog.items.reduce((sum, item) => sum + item.qty * item.price, 0);
         let subtotal, vatAmt, grandTotal;
-        if (config.targetType === 'inclusive') {
+        if (effectiveConfig.targetType === 'inclusive') {
             grandTotal = grandTotalItemsValue;
-            subtotal = grandTotal / (1 + (config.vatRate / 100));
+            subtotal = grandTotal / (1 + (effectiveConfig.vatRate / 100));
             vatAmt = grandTotal - subtotal;
         } else {
             subtotal = grandTotalItemsValue;
-            vatAmt = subtotal * (config.vatRate / 100);
+            vatAmt = subtotal * (effectiveConfig.vatRate / 100);
             grandTotal = subtotal + vatAmt;
         }
         const fmt = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -414,9 +562,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <hr style="border:none;border-top:2px solid #222;margin-bottom:14px;">
 
             <div style="background:#f7f7f7;padding:10px 14px;border-radius:6px;margin-bottom:18px;">
-                <div><strong>ชื่อลูกค้า (Customer):</strong>&nbsp;${config.custName}</div>
-                ${config.custTax ? `<div><strong>เลขประจำตัวผู้เสียภาษี:</strong>&nbsp;${config.custTax}</div>` : ''}
-                ${config.custAddr ? `<div><strong>ที่อยู่ (Address):</strong>&nbsp;${config.custAddr.replace(/\n/g, '<br>')}</div>` : ''}
+                <div><strong>ชื่อลูกค้า (Customer):</strong>&nbsp;${effectiveConfig.custName}</div>
+                ${effectiveConfig.custTax ? `<div><strong>เลขประจำตัวผู้เสียภาษี:</strong>&nbsp;${effectiveConfig.custTax}</div>` : ''}
+                ${effectiveConfig.custAddr ? `<div><strong>ที่อยู่ (Address):</strong>&nbsp;${effectiveConfig.custAddr.replace(/\n/g, '<br>')}</div>` : ''}
             </div>
 
             <table style="width:100%;border-collapse:collapse;border:1px solid #bbb;">
@@ -442,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ` : ''}
                     ${!config.hideVat ? `
                     <tr>
-                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${config.vatRate}%):</td>
+                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${effectiveConfig.vatRate}%):</td>
                         <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">${fmt(vatAmt)} บาท</td>
                     </tr>
                     ` : ''}

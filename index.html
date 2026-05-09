@@ -151,6 +151,20 @@
                 <p class="helper-text mt-2" data-i18n="helper_price">Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).</p>
             </section>
 
+            <!-- Ad-hoc Invoices -->
+            <section class="card glass mt-6">
+                <div class="flex-between" style="align-items:flex-start;">
+                    <div>
+                        <h2 data-i18n="adhoc_title">Ad-hoc Invoices</h2>
+                        <p class="helper-text" data-i18n="adhoc_desc">One-off invoices for specific dates — excluded from the monthly target calculation.</p>
+                    </div>
+                    <button type="button" id="btn-add-adhoc" class="btn btn-secondary btn-sm" style="flex-shrink:0;margin-left:1rem;" data-i18n="btn_add_adhoc">+ Add Ad-hoc Invoice</button>
+                </div>
+                <div id="adhoc-cards-container" class="mt-4">
+                    <!-- JS populated -->
+                </div>
+            </section>
+
             <!-- Actions -->
             <div class="actions mt-8">
                 <button type="submit" id="btn-generate" class="btn btn-primary btn-lg" data-i18n="btn_generate">Generate Invoices</button>
