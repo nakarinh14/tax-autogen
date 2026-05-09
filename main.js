@@ -40,7 +40,15 @@ const translations = {
         lang_btn: "🇺🇸 EN",
         adhoc_title: "Ad-hoc Invoices",
         adhoc_desc: "One-off invoices for specific dates — excluded from the monthly target.",
-        btn_add_adhoc: "+ Add Ad-hoc Invoice"
+        btn_add_adhoc: "+ Add Ad-hoc Invoice",
+        adhoc_inv_title: "Ad-hoc Invoice",
+        btn_remove: "✕ Remove",
+        inv_date: "Invoice Date",
+        cust_tax_opt: "Customer Tax ID <small style=\"opacity:0.6\">(optional)</small>",
+        cust_addr_opt: "Customer Address <small style=\"opacity:0.6\">(optional)</small>",
+        items_label: "Items",
+        btn_add_row: "+ Add Row",
+        th_qty: "Qty"
     },
     th: {
         app_title: "โปรแกรมสร้างใบกำกับภาษีอัตโนมัติ",
@@ -81,7 +89,15 @@ const translations = {
         lang_btn: "🇹🇭 TH",
         adhoc_title: "ใบกำกับภาษีเพิ่มเติม",
         adhoc_desc: "ใบกำกับภาษีสำหรับวันที่เฉพาะเจาะจง — ไม่รวมในยอดเป้าหมายรายเดือน",
-        btn_add_adhoc: "+ เพิ่มใบกำกับเพิ่มเติม"
+        btn_add_adhoc: "+ เพิ่มใบกำกับเพิ่มเติม",
+        adhoc_inv_title: "ใบกำกับภาษีเพิ่มเติม",
+        btn_remove: "✕ ลบ",
+        inv_date: "วันที่เอกสาร",
+        cust_tax_opt: "เลขประจำตัวผู้เสียภาษี <small style=\"opacity:0.6\">(ไม่บังคับ)</small>",
+        cust_addr_opt: "ที่อยู่ลูกค้า <small style=\"opacity:0.6\">(ไม่บังคับ)</small>",
+        items_label: "รายการสินค้า",
+        btn_add_row: "+ เพิ่มรายการ",
+        th_qty: "จำนวน"
     }
 };
 
@@ -170,50 +186,50 @@ document.addEventListener('DOMContentLoaded', () => {
         card.style.cssText = 'border:1px solid rgba(245,158,11,0.4);border-left:4px solid #f59e0b;border-radius:12px;padding:1.4rem;margin-bottom:1.2rem;background:rgba(245,158,11,0.07);';
         card.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <strong style="color:#f59e0b;font-size:1rem;">Ad-hoc Invoice #${adhocCount}</strong>
-                <button type="button" class="btn btn-danger btn-sm adhoc-remove-btn">✕ Remove</button>
+                <strong style="color:#f59e0b;font-size:1rem;"><span data-i18n="adhoc_inv_title">Ad-hoc Invoice</span> #${adhocCount}</strong>
+                <button type="button" class="btn btn-danger btn-sm adhoc-remove-btn" data-i18n="btn_remove">✕ Remove</button>
             </div>
             <div class="grid-3">
                 <div class="form-group">
-                    <label>Invoice Date</label>
+                    <label data-i18n="inv_date">Invoice Date</label>
                     <input type="text" class="adhoc-date" placeholder="DD/MM/YYYY">
                 </div>
                 <div class="form-group">
-                    <label>Customer Name</label>
+                    <label data-i18n="cust_name">Customer Name</label>
                     <input type="text" class="adhoc-cust-name" placeholder="Customer name">
                 </div>
                 <div class="form-group">
-                    <label>Customer Tax ID <small style="opacity:0.6">(optional)</small></label>
+                    <label data-i18n="cust_tax_opt">Customer Tax ID <small style="opacity:0.6">(optional)</small></label>
                     <input type="text" class="adhoc-cust-tax" placeholder="Tax ID">
                 </div>
             </div>
             <div class="form-group">
-                <label>Customer Address <small style="opacity:0.6">(optional)</small></label>
+                <label data-i18n="cust_addr_opt">Customer Address <small style="opacity:0.6">(optional)</small></label>
                 <textarea class="adhoc-cust-addr" rows="2" placeholder="Address..."></textarea>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                 <div class="form-group">
-                    <label>VAT Rate (%)</label>
+                    <label data-i18n="vat_rate">VAT Rate (%)</label>
                     <input type="number" class="adhoc-vat-rate" value="7" step="1" min="0">
                 </div>
                 <div class="form-group">
-                    <label>Amount Type</label>
+                    <label data-i18n="amount_type">Amount Type</label>
                     <select class="adhoc-target-type">
-                        <option value="exclusive">Excludes VAT (ราคายังไม่รวมภาษี)</option>
-                        <option value="inclusive">Includes VAT (ราคารวมภาษีแล้ว)</option>
+                        <option value="exclusive" data-i18n="type_exc">Excludes VAT (ราคายังไม่รวมภาษี)</option>
+                        <option value="inclusive" data-i18n="type_inc">Includes VAT (ราคารวมภาษีแล้ว)</option>
                     </select>
                 </div>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0 0.5rem;">
-                <label style="margin:0;font-weight:600;">Items</label>
-                <button type="button" class="btn btn-secondary btn-sm adhoc-add-row-btn">+ Add Row</button>
+                <label style="margin:0;font-weight:600;" data-i18n="items_label">Items</label>
+                <button type="button" class="btn btn-secondary btn-sm adhoc-add-row-btn" data-i18n="btn_add_row">+ Add Row</button>
             </div>
             <div class="table-container">
                 <table class="items-table">
                     <thead><tr>
-                        <th>Description</th>
-                        <th width="80">Qty</th>
-                        <th width="150">Unit Price (Baht)</th>
+                        <th data-i18n="th_item_desc">Description</th>
+                        <th width="80" data-i18n="th_qty">Qty</th>
+                        <th width="150" data-i18n="th_unit_price">Unit Price (Baht)</th>
                         <th width="60"></th>
                     </tr></thead>
                     <tbody class="adhoc-items-tbody"></tbody>
@@ -225,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addAdhocRow(tbody);
         flatpickr(card.querySelector('.adhoc-date'), { dateFormat: 'd/m/Y' });
         adhocContainer.appendChild(card);
+        applyTranslations();
     }
 
     function addAdhocRow(tbody) {
