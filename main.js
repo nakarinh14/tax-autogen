@@ -30,9 +30,17 @@ const translations = {
         start_inv_num: "Starting Invoice No. (Override)",
         req_daily: "Require daily invoice",
         hide_vat: "Hide VAT (ไม่แสดงภาษี)",
+        invoice_type: "Tax Invoice Type",
+        inv_type_full: "Full Form (ใบกำกับภาษีเต็มรูปแบบ)",
+        inv_type_abbr: "Abbreviated (ใบกำกับภาษีอย่างย่อ)",
+        inv_type_hint: "Abbreviated: for retail/consumer. Full Form: for business VAT credit.",
+        cust_tax_req: "Tax ID (required)",
         fixed_item_list: "Fixed Item List",
         btn_add_item: "+ Add Item",
+        btn_import_excel: "Import Excel",
+        btn_download_template: "Download Template",
         th_item_desc: "Item Description",
+        th_qty: "Qty",
         th_unit_price: "Unit Price (Baht)",
         helper_price: 'Prices should align with your "Amount Type" (if Inclusive VAT, these prices are assumed to include VAT).',
         btn_generate: "Generate Invoices",
@@ -48,7 +56,13 @@ const translations = {
         cust_addr_opt: "Customer Address <small style=\"opacity:0.6\">(optional)</small>",
         items_label: "Items",
         btn_add_row: "+ Add Row",
-        th_qty: "Qty"
+        th_qty: "Qty",
+        branch_type: "Branch Type",
+        branch_none: "— None —",
+        branch_head: "Head Office (สำนักงานใหญ่)",
+        branch_br: "Branch (สาขา)",
+        branch_no: "Branch No. (5-digit)",
+        adhoc_same_cust: "Same customer as main form"
     },
     th: {
         app_title: "โปรแกรมสร้างใบกำกับภาษีอัตโนมัติ",
@@ -79,9 +93,17 @@ const translations = {
         start_inv_num: "เลขที่ใบกำกับเริ่มต้น (กำหนดเอง)",
         req_daily: "ต้องมีใบกำกับทุกวัน",
         hide_vat: "ซ่อนภาษี (ไม่แสดงภาษี)",
+        invoice_type: "ประเภทใบกำกับภาษี",
+        inv_type_full: "แบบเต็มรูปแบบ (Full Form)",
+        inv_type_abbr: "แบบอย่างย่อ (Abbreviated)",
+        inv_type_hint: "แบบอย่างย่อ: สำหรับขายปลีก/ผู้บริโภค. แบบเต็มรูปแบบ: สำหรับธุรกิจขอคืน VAT.",
+        cust_tax_req: "เลขประจำตัวผู้เสียภาษี (จำเป็น)",
         fixed_item_list: "รายการสินค้า",
         btn_add_item: "+ เพิ่มรายการ",
+        btn_import_excel: "นำเข้าจาก Excel",
+        btn_download_template: "ดาวน์โหลดเทมเพลต",
         th_item_desc: "รายละเอียดสินค้า",
+        th_qty: "จำนวน",
         th_unit_price: "ราคาต่อหน่วย (บาท)",
         helper_price: 'ราคาควรสอดคล้องกับ "ประเภทจำนวนเงิน" (หากรวมภาษีแล้ว ราคาที่ระบุต้องรวมภาษีด้วย)',
         btn_generate: "สร้างใบกำกับภาษี",
@@ -97,7 +119,13 @@ const translations = {
         cust_addr_opt: "ที่อยู่ลูกค้า <small style=\"opacity:0.6\">(ไม่บังคับ)</small>",
         items_label: "รายการสินค้า",
         btn_add_row: "+ เพิ่มรายการ",
-        th_qty: "จำนวน"
+        th_qty: "จำนวน",
+        branch_type: "สถานะสาขา",
+        branch_none: "— ไม่ระบุ —",
+        branch_head: "สำนักงานใหญ่",
+        branch_br: "สาขา",
+        branch_no: "เลขที่สาขา (5 หลัก)",
+        adhoc_same_cust: "ข้อมูลลูกค้าเหมือนกับฟอร์มหลัก"
     }
 };
 
@@ -116,6 +144,35 @@ function applyTranslations() {
     }
 }
 
+function normalizeTaxId(val) {
+    return (val || '').replace(/\D/g, '');
+}
+
+function formatTaxId(raw) {
+    const digits = normalizeTaxId(raw);
+    if (digits.length !== 13) return raw;
+    return `${digits[0]}-${digits.slice(1, 5)}-${digits.slice(5, 10)}-${digits.slice(10, 12)}-${digits[12]}`;
+}
+
+function setupBranchToggle(typeSelectId, noGroupId) {
+    const sel = document.getElementById(typeSelectId);
+    const grp = document.getElementById(noGroupId);
+    if (sel && grp) {
+        const toggle = () => { grp.style.display = sel.value === 'branch' ? '' : 'none'; };
+        sel.addEventListener('change', toggle);
+        toggle();
+    }
+}
+
+function updateCustTaxLabel() {
+    const custTaxLabel = document.querySelector('label[for="cust-tax"]');
+    const invoiceType = document.getElementById('invoice-type');
+    if (custTaxLabel && invoiceType) {
+        const isFull = invoiceType.value === 'full';
+        custTaxLabel.setAttribute('data-i18n', isFull ? 'cust_tax_req' : 'cust_tax');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Disable scroll wheel from changing number input values
     document.addEventListener('wheel', function(e) {
@@ -130,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnLangToggle) {
         btnLangToggle.addEventListener('click', () => {
             currentLang = currentLang === 'en' ? 'th' : 'en';
+            updateCustTaxLabel();
             applyTranslations();
         });
     }
@@ -147,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultDate: lastDay 
     });
 
+    setupBranchToggle('comp-branch-type', 'comp-branch-no-group');
+    setupBranchToggle('cust-branch-type', 'cust-branch-no-group');
+
     const form = document.getElementById('generator-form');
     const itemsTbody = document.getElementById('items-tbody');
     const btnAddItem = document.getElementById('btn-add-item');
@@ -161,6 +222,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             invStartNum.required = false;
         }
+    });
+
+    const invoiceTypeSelect = document.getElementById('invoice-type');
+    const hideVatCheckbox = document.getElementById('hide-vat');
+    const custTaxInput = document.getElementById('cust-tax');
+    invoiceTypeSelect.addEventListener('change', () => {
+        const isFull = invoiceTypeSelect.value === 'full';
+        custTaxInput.required = isFull;
+        hideVatCheckbox.disabled = isFull;
+        if (isFull) hideVatCheckbox.checked = false;
+        updateCustTaxLabel();
+        applyTranslations();
     });
 
     const statusContainer = document.getElementById('status-container');
@@ -189,6 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong style="color:#f59e0b;font-size:1rem;"><span data-i18n="adhoc_inv_title">Ad-hoc Invoice</span> #${adhocCount}</strong>
                 <button type="button" class="btn btn-danger btn-sm adhoc-remove-btn" data-i18n="btn_remove">✕ Remove</button>
             </div>
+            <div style="margin-bottom:0.8rem;">
+                <label style="cursor:pointer;font-size:0.9rem;color:#fbbf24;">
+                    <input type="checkbox" class="adhoc-use-main-cust" checked>
+                    <span data-i18n="adhoc_same_cust">Same customer as main form</span>
+                </label>
+            </div>
             <div class="grid-3">
                 <div class="form-group">
                     <label data-i18n="inv_date">Invoice Date</label>
@@ -200,12 +279,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="form-group">
                     <label data-i18n="cust_tax_opt">Customer Tax ID <small style="opacity:0.6">(optional)</small></label>
-                    <input type="text" class="adhoc-cust-tax" placeholder="Tax ID">
+                    <input type="text" class="adhoc-cust-tax" pattern="\\d{13}" maxlength="13" placeholder="13-digit Tax ID">
                 </div>
             </div>
             <div class="form-group">
                 <label data-i18n="cust_addr_opt">Customer Address <small style="opacity:0.6">(optional)</small></label>
                 <textarea class="adhoc-cust-addr" rows="2" placeholder="Address..."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label data-i18n="branch_type">Branch Type</label>
+                    <select class="adhoc-branch-type">
+                        <option value="" data-i18n="branch_none">— None —</option>
+                        <option value="head" data-i18n="branch_head">Head Office (สำนักงานใหญ่)</option>
+                        <option value="branch" data-i18n="branch_br">Branch (สาขา)</option>
+                    </select>
+                </div>
+                <div class="form-group adhoc-branch-no-group" style="display:none;">
+                    <label data-i18n="branch_no">Branch No. (5-digit)</label>
+                    <input type="text" class="adhoc-branch-no" pattern="\\d{5}" maxlength="5" placeholder="e.g. 00001">
+                </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                 <div class="form-group">
@@ -222,7 +315,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0 0.5rem;">
                 <label style="margin:0;font-weight:600;" data-i18n="items_label">Items</label>
-                <button type="button" class="btn btn-secondary btn-sm adhoc-add-row-btn" data-i18n="btn_add_row">+ Add Row</button>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-secondary btn-sm adhoc-download-template-btn" data-i18n="btn_download_template">Download Template</button>
+                    <button type="button" class="btn btn-secondary btn-sm adhoc-import-excel-btn" data-i18n="btn_import_excel">Import Excel</button>
+                    <button type="button" class="btn btn-secondary btn-sm adhoc-add-row-btn" data-i18n="btn_add_row">+ Add Row</button>
+                </div>
+                <input type="file" class="adhoc-file-excel-input" accept=".xlsx,.xls" style="display:none;">
             </div>
             <div class="table-container">
                 <table class="items-table">
@@ -240,16 +338,101 @@ document.addEventListener('DOMContentLoaded', () => {
         card.querySelector('.adhoc-add-row-btn').addEventListener('click', () => addAdhocRow(tbody));
         addAdhocRow(tbody);
         flatpickr(card.querySelector('.adhoc-date'), { dateFormat: 'd/m/Y' });
+
+        // Ad-hoc branch type toggle
+        const adhocBranchType = card.querySelector('.adhoc-branch-type');
+        const adhocBranchNoGroup = card.querySelector('.adhoc-branch-no-group');
+        if (adhocBranchType && adhocBranchNoGroup) {
+            const toggle = () => { adhocBranchNoGroup.style.display = adhocBranchType.value === 'branch' ? '' : 'none'; };
+            adhocBranchType.addEventListener('change', toggle);
+            toggle();
+        }
+
+        // Use main customer toggle
+        const useMainCust = card.querySelector('.adhoc-use-main-cust');
+        const custFields = [
+            card.querySelector('.adhoc-cust-name'),
+            card.querySelector('.adhoc-cust-tax'),
+            card.querySelector('.adhoc-cust-addr'),
+            card.querySelector('.adhoc-branch-type'),
+            card.querySelector('.adhoc-branch-no')
+        ];
+        function toggleCustFields() {
+            const disabled = useMainCust.checked;
+            custFields.forEach(el => { if (el) el.disabled = disabled; });
+            if (disabled && adhocBranchNoGroup) adhocBranchNoGroup.style.display = 'none';
+        }
+        useMainCust.addEventListener('change', toggleCustFields);
+        toggleCustFields();
+
+        // Ad-hoc Excel import
+        const fileInput = card.querySelector('.adhoc-file-excel-input');
+        card.querySelector('.adhoc-import-excel-btn').addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    tbody.innerHTML = '';
+                    let imported = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length === 0) continue;
+                        const name = String(row[0] || '').trim();
+                        if (!name) continue;
+                        const qty = parseInt(row[1]) || 1;
+                        const price = parseFloat(row[2]) || 0;
+                        if (price <= 0) continue;
+                        addAdhocRow(tbody, name, qty, price);
+                        imported++;
+                    }
+                    if (imported > 0) {
+                        statusText.innerText = `Imported ${imported} items from Excel.`;
+                        statusContainer.classList.remove('hidden');
+                        setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+                    } else {
+                        addAdhocRow(tbody);
+                        alert('No valid items found. Expected columns: Description (A), Qty (B), Unit Price (C).');
+                    }
+                } catch (err) {
+                    alert('Failed to parse Excel file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            fileInput.value = '';
+        });
+
+        // Ad-hoc Download Template
+        card.querySelector('.adhoc-download-template-btn').addEventListener('click', () => {
+            const headers = ['Description', 'Qty', 'Unit Price'];
+            const sampleData = [
+                ['Product A', 1, 100.00],
+                ['Product B', 2, 200.00]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
+            ws['!cols'] = [{ wch: 25 }, { wch: 8 }, { wch: 14 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Products');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            saveAs(blob, 'invoice_template.xlsx');
+        });
+
         adhocContainer.appendChild(card);
         applyTranslations();
     }
 
-    function addAdhocRow(tbody) {
+    function addAdhocRow(tbody, name = '', qty = 1, price = 0) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="adhoc-item-name" placeholder="Item description"></td>
-            <td><input type="number" class="adhoc-item-qty" value="1" min="1"></td>
-            <td><input type="number" class="adhoc-item-price" step="0.01" min="0" value="0"></td>
+            <td><input type="text" class="adhoc-item-name" value="${name}" placeholder="Item description"></td>
+            <td><input type="number" class="adhoc-item-qty" value="${qty}" min="1"></td>
+            <td><input type="number" class="adhoc-item-price" step="0.01" min="0" value="${price}"></td>
             <td><button type="button" class="btn btn-danger btn-remove-item">✕</button></td>`;
         tr.querySelector('.btn-remove-item').addEventListener('click', () => {
             if (tbody.children.length > 1) tr.remove();
@@ -258,10 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
     }
 
-    function addItemRow(name = '', price = 0) {
+    function addItemRow(name = '', price = 0, qty = 1) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><input type="text" class="item-name" value="${name}" required placeholder="Item name"></td>
+            <td><input type="number" class="item-qty" value="${qty}" min="1" style="width:80px;"></td>
             <td><input type="number" step="0.01" min="0.01" class="item-price" value="${price}" required></td>
             <td><button type="button" class="btn btn-danger btn-remove-item">✕</button></td>
         `;
@@ -275,6 +459,62 @@ document.addEventListener('DOMContentLoaded', () => {
         itemsTbody.appendChild(tr);
     }
 
+    const fileExcelInput = document.getElementById('file-excel-input');
+    document.getElementById('btn-import-excel').addEventListener('click', () => fileExcelInput.click());
+    fileExcelInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                itemsTbody.innerHTML = '';
+                let imported = 0;
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+                    const name = String(row[0] || '').trim();
+                    if (!name) continue;
+                    const qty = parseInt(row[1]) || 1;
+                    const price = parseFloat(row[2]) || 0;
+                    if (price <= 0) continue;
+                    addItemRow(name, price, qty);
+                    imported++;
+                }
+                if (imported > 0) {
+                    statusText.innerText = `Imported ${imported} items from Excel.`;
+                    statusContainer.classList.remove('hidden');
+                    setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+                } else {
+                    addItemRow();
+                    alert('No valid items found. Expected columns: Description (A), Qty (B), Unit Price (C).');
+                }
+            } catch (err) {
+                alert('Failed to parse Excel file: ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        fileExcelInput.value = '';
+    });
+
+    document.getElementById('btn-download-template').addEventListener('click', () => {
+        const headers = ['Description', 'Qty', 'Unit Price'];
+        const sampleData = [
+            ['Product A', 1, 100.00],
+            ['Product B', 2, 200.00]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
+        ws['!cols'] = [{ wch: 25 }, { wch: 8 }, { wch: 14 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Products');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        saveAs(blob, 'invoice_template.xlsx');
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -286,18 +526,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const config = {
             compName: document.getElementById('comp-name').value,
-            compTax: document.getElementById('comp-tax').value,
+            compTax: normalizeTaxId(document.getElementById('comp-tax').value),
             compAddr: document.getElementById('comp-addr').value,
-            compBranch: document.getElementById('comp-branch').value,
+            compBranchType: document.getElementById('comp-branch-type').value,
+            compBranchNo: document.getElementById('comp-branch-no').value,
             compPhone: document.getElementById('comp-phone') ? document.getElementById('comp-phone').value : '',
             custName: document.getElementById('cust-name').value,
-            custTax: document.getElementById('cust-tax').value,
+            custTax: normalizeTaxId(document.getElementById('cust-tax').value),
             custAddr: document.getElementById('cust-addr').value,
+            custBranchType: document.getElementById('cust-branch-type').value,
+            custBranchNo: document.getElementById('cust-branch-no').value,
             startDate: parseDateString(document.getElementById('date-start').value),
             endDate: parseDateString(document.getElementById('date-end').value),
             targetMoney: parseFloat(document.getElementById('target-money').value),
             targetType: document.getElementById('target-type').value, // 'inclusive' or 'exclusive'
             vatRate: parseFloat(document.getElementById('vat-rate').value),
+            invoiceType: document.getElementById('invoice-type').value,
             maxQty: parseInt(document.getElementById('max-qty').value),
             requireDaily: document.getElementById('require-daily').checked,
             hideVat: document.getElementById('hide-vat').checked,
@@ -306,12 +550,23 @@ document.addEventListener('DOMContentLoaded', () => {
             invStartNum: parseInt(document.getElementById('inv-start-num').value),
             items: Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => ({
                 name: tr.querySelector('.item-name').value,
+                qty: parseInt(tr.querySelector('.item-qty').value) || 1,
                 price: parseFloat(tr.querySelector('.item-price').value)
             }))
         };
 
         if (config.startDate > config.endDate) {
             alert('Start date must be before or equal to End date.');
+            return;
+        }
+
+        if (config.compTax.length !== 13) {
+            alert('Company Tax ID must be exactly 13 digits.');
+            return;
+        }
+        const isFullForm = config.invoiceType === 'full';
+        if (isFullForm && config.custTax.length !== 13) {
+            alert('Customer Tax ID is required and must be exactly 13 digits for Full Form tax invoices.');
             return;
         }
 
@@ -328,32 +583,41 @@ document.addEventListener('DOMContentLoaded', () => {
         await new Promise(r => setTimeout(r, 100));
 
         try {
-            // 1. Math Distribution
-            const daysCount = Math.floor((config.endDate - config.startDate) / (1000 * 60 * 60 * 24)) + 1;
-            const distributedLog = distributeMath(config, daysCount);
+            // 1. Math Distribution (only if fixed items exist)
+            const hasFixedItems = config.items.some(it => it.name && it.price > 0);
+            const adhocCards = document.querySelectorAll('.adhoc-card');
 
-            if (!distributedLog) {
-                throw new Error("Could not find an exact combination to meet the target money using only the provided item prices and max quantity limits. Tip: Ensure your Target Money is reachable by combining your exact item prices (e.g. they share a common divisor).");
+            if (!hasFixedItems && adhocCards.length === 0) {
+                throw new Error('No items to generate. Please add items to the Fixed Item List or create an ad-hoc invoice.');
             }
 
             // 2. Prepare all invoice jobs
             let invoiceJobs = [];
 
-            // Collect monthly invoices
-            for (let i = 0; i < distributedLog.length; i++) {
-                const dayLog = distributedLog[i];
-                if (dayLog.items.length === 0) continue; // Skip empty days
+            if (hasFixedItems) {
+                statusText.innerText = 'Distributing exact items...';
+                await new Promise(r => setTimeout(r, 10));
 
-                const jobDate = new Date(config.startDate.getTime() + (i * 24 * 60 * 60 * 1000));
-                invoiceJobs.push({
-                    date: jobDate,
-                    dayLog: dayLog,
-                    overrides: {}
-                });
+                const daysCount = Math.floor((config.endDate - config.startDate) / (1000 * 60 * 60 * 24)) + 1;
+                const distributedLog = distributeMath(config, daysCount);
+
+                if (!distributedLog) {
+                    throw new Error("Could not find an exact combination to meet the target money using only the provided item prices and max quantity limits. Tip: Ensure your Target Money is reachable by combining your exact item prices (e.g. they share a common divisor).");
+                }
+
+                for (let i = 0; i < distributedLog.length; i++) {
+                    const dayLog = distributedLog[i];
+                    if (dayLog.items.length === 0) continue;
+                    const jobDate = new Date(config.startDate.getTime() + (i * 24 * 60 * 60 * 1000));
+                    invoiceJobs.push({
+                        date: jobDate,
+                        dayLog: dayLog,
+                        overrides: {}
+                    });
+                }
             }
 
             // Collect ad-hoc invoices (excluded from monthly target)
-            const adhocCards = document.querySelectorAll('.adhoc-card');
             for (let ai = 0; ai < adhocCards.length; ai++) {
                 const card = adhocCards[ai];
                 const dateVal = card.querySelector('.adhoc-date').value;
@@ -368,13 +632,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 invoiceJobs.push({
                     date: parseDateString(dateVal),
                     dayLog: { items: adhocItems },
-                    overrides: {
-                        custName: card.querySelector('.adhoc-cust-name').value,
-                        custTax: card.querySelector('.adhoc-cust-tax').value,
-                        custAddr: card.querySelector('.adhoc-cust-addr').value,
-                        vatRate: parseFloat(card.querySelector('.adhoc-vat-rate').value) || 0,
-                        targetType: card.querySelector('.adhoc-target-type').value
-                    }
+                    isAdhoc: true,
+                    overrides: (() => {
+                        const o = {
+                            vatRate: parseFloat(card.querySelector('.adhoc-vat-rate').value) || 0,
+                            targetType: card.querySelector('.adhoc-target-type').value
+                        };
+                        if (!card.querySelector('.adhoc-use-main-cust').checked) {
+                            o.custName = card.querySelector('.adhoc-cust-name').value;
+                            o.custTax = normalizeTaxId(card.querySelector('.adhoc-cust-tax').value);
+                            o.custAddr = card.querySelector('.adhoc-cust-addr').value;
+                            o.custBranchType = card.querySelector('.adhoc-branch-type').value;
+                            o.custBranchNo = card.querySelector('.adhoc-branch-no').value;
+                        }
+                        return o;
+                    })()
                 });
             }
 
@@ -384,7 +656,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // 3. Generate PDFs
             const zip = new JSZip();
             let invCounter = config.invStartNum;
+            let adhocCounter = 1;
             let runningDateInvNum = null;
+            const adhocDateSeq = {};
 
             for (let i = 0; i < invoiceJobs.length; i++) {
                 const job = invoiceJobs[i];
@@ -396,21 +670,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(r => setTimeout(r, 10)); // Yield for UI
 
                 let invNumber;
-                if (config.useDateInv) {
+                if (job.isAdhoc) {
                     const yyyy = job.date.getFullYear();
                     const mm = String(job.date.getMonth() + 1).padStart(2, '0');
                     const dd = String(job.date.getDate()).padStart(2, '0');
-                    const dateAsNum = parseInt(`${yyyy}${mm}${dd}`, 10);
-                    
-                    if (runningDateInvNum === null || runningDateInvNum < dateAsNum) {
-                        runningDateInvNum = dateAsNum;
+                    const dateKey = `${yyyy}${mm}${dd}`;
+                    if (config.useDateInv) {
+                        if (adhocDateSeq[dateKey] === undefined) adhocDateSeq[dateKey] = 1;
+                        invNumber = `WH-${dateKey}-${String(adhocDateSeq[dateKey]).padStart(4, '0')}`;
+                        adhocDateSeq[dateKey]++;
+                    } else {
+                        invNumber = `WH-${adhocCounter}`;
+                        adhocCounter++;
                     }
-                    
-                    invNumber = `TX-${runningDateInvNum}`;
-                    runningDateInvNum++;
                 } else {
-                    invNumber = `TX-${invCounter}`;
-                    invCounter++;
+                    if (config.useDateInv) {
+                        const yyyy = job.date.getFullYear();
+                        const mm = String(job.date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(job.date.getDate()).padStart(2, '0');
+                        const dateAsNum = parseInt(`${yyyy}${mm}${dd}`, 10);
+                        
+                        if (runningDateInvNum === null || runningDateInvNum < dateAsNum) {
+                            runningDateInvNum = dateAsNum;
+                        }
+                        
+                        invNumber = `TX-${runningDateInvNum}`;
+                        runningDateInvNum++;
+                    } else {
+                        invNumber = `TX-${invCounter}`;
+                        invCounter++;
+                    }
                 }
 
                 const pdfBlob = await generateInvoicePDF(job.dayLog, config, job.date, 0, invNumber, job.overrides);
@@ -505,13 +794,122 @@ document.addEventListener('DOMContentLoaded', () => {
         return null; // All retries stuck
     }
 
+    function getItemsPerPage(paperSize) {
+        switch (paperSize) {
+            case 'a5': return 8;
+            case 'a4': return 16;
+            case 'a3': return 22;
+            default: return 10;
+        }
+    }
+
+    function buildPageHTML(p) {
+        const titleThai = p.isFullForm
+            ? 'ใบกำกับภาษีเต็มรูปแบบ / ใบเสร็จรับเงิน'
+            : 'ใบกำกับภาษีอย่างย่อ / ใบเสร็จรับเงิน';
+        const titleEng = 'TAX INVOICE / RECEIPT';
+
+        const pageIndicator = p.totalPages > 1 
+            ? ` (หน้า ${p.pageNum}/${p.totalPages})`
+            : '';
+
+        const rowsHTML = p.pageItems.map((item, j) => {
+            const seq = p.startSeqNum + j;
+            const lineTotal = item.qty * item.price;
+            return `<tr>
+                <td style="text-align:center;padding:4px 10px;border-bottom:1px solid #e0e0e0;">${seq}</td>
+                <td style="padding:4px 10px;border-bottom:1px solid #e0e0e0;">${item.name}</td>
+                <td style="text-align:center;padding:4px 10px;border-bottom:1px solid #e0e0e0;">${item.qty}</td>
+                <td style="text-align:right;padding:4px 10px;border-bottom:1px solid #e0e0e0;">${p.fmt(item.price)}</td>
+                <td style="text-align:right;padding:4px 10px;border-bottom:1px solid #e0e0e0;">${p.fmt(lineTotal)}</td>
+            </tr>`;
+        }).join('');
+
+        let footerHTML;
+        if (p.totalPages > 1 && !p.isLastPage) {
+            footerHTML = `<div style="text-align:center;margin-top:18px;color:#555;font-size:${p.fs * 0.95}px;">
+                มีใบกำกับภาษีแผ่นต่อไป (Continue on next page)
+            </div>`;
+        } else {
+            footerHTML = `
+                <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+                    <table style="border-collapse:collapse;">
+                        ${p.showVat ? `
+                        <tr>
+                            <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">รวมเงิน (Sub Total):</td>
+                            <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;min-width:150px;">${p.fmt(p.subtotal)} บาท</td>
+                        </tr>` : ''}
+                        ${p.showVat ? `
+                        <tr>
+                            <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${p.effectiveConfig.vatRate}%):</td>
+                            <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">${p.fmt(p.vatAmt)} บาท</td>
+                        </tr>` : ''}
+                        <tr style="background:#f0f0f0;">
+                            <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">จำนวนเงินรวมภาษีมูลค่าเพิ่มทั้งสิ้น (Grand Total):</td>
+                            <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">${p.fmt(p.grandTotal)} บาท</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="text-align:center;margin-top:18px;">
+                    <div style="display:inline-block;border-top:1px solid #555;padding-top:10px;min-width:260px;">
+                        <div>ผู้มีอำนาจลงนาม / Authorized Signature</div>
+                        <div style="margin-top:4px;">วันที่ (Date): ____________</div>
+                    </div>
+                </div>`;
+        }
+
+        return `
+            <div style="text-align:center;margin-bottom:14px;">
+                <div style="font-size:${p.fs * 1.6}px;font-weight:700;letter-spacing:0.5px;">${titleThai}</div>
+                <div style="font-size:${p.fs * 1.2}px;font-weight:600;letter-spacing:2px;">${titleEng}</div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:16px;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:${p.fs * 1.3}px;margin-bottom:4px;">${p.config.compName}</div>
+                    <div>${p.config.compAddr.replace(/\n/g, '<br>')}</div>
+                    <div>เลขประจำตัวผู้เสียภาษี: ${formatTaxId(p.config.compTax)}</div>
+                    ${p.config.compBranchType === 'head' ? '<div>สำนักงานใหญ่</div>' : ''}
+                    ${p.config.compBranchType === 'branch' ? `<div>สาขาที่ ${p.config.compBranchNo || '00000'}</div>` : ''}
+                    ${p.config.compPhone ? `<div>โทร: ${p.config.compPhone}</div>` : ''}
+                </div>
+                <div style="border:1px solid #bbb;padding:10px 14px;border-radius:8px;text-align:right;min-width:210px;">
+                    <div style="margin-bottom:4px;"><strong>เลขที่ (No.):</strong>&nbsp;${p.invNum}${pageIndicator}</div>
+                    <div><strong>วันที่ (Date):</strong>&nbsp;${p.dtStr}</div>
+                </div>
+            </div>
+
+            <hr style="border:none;border-top:2px solid #222;margin-bottom:10px;">
+
+            <div style="background:#f7f7f7;padding:8px 14px;border-radius:6px;margin-bottom:12px;">
+                <div><strong>ชื่อลูกค้า (Customer):</strong>&nbsp;${p.effectiveConfig.custName}</div>
+                ${p.effectiveConfig.custTax ? `<div><strong>เลขประจำตัวผู้เสียภาษี:</strong>&nbsp;${formatTaxId(p.effectiveConfig.custTax)}</div>` : ''}
+                ${p.effectiveConfig.custBranchType === 'head' ? '<div><strong>สถานะสาขา:</strong>&nbsp;สำนักงานใหญ่</div>' : ''}
+                ${p.effectiveConfig.custBranchType === 'branch' ? `<div><strong>สถานะสาขา:</strong>&nbsp;สาขาที่ ${p.effectiveConfig.custBranchNo || '00000'}</div>` : ''}
+                ${p.effectiveConfig.custAddr ? `<div><strong>ที่อยู่ (Address):</strong>&nbsp;${p.effectiveConfig.custAddr.replace(/\n/g, '<br>')}</div>` : ''}
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;border:1px solid #bbb;">
+                <thead>
+                    <tr>
+                        <th style="padding:6px 10px;text-align:center;width:7%;font-size:${p.fs * 0.9}px;background:#f0f0f0;color:#111;">ลำดับ</th>
+                        <th style="padding:6px 10px;text-align:left;font-size:${p.fs * 0.9}px;background:#f0f0f0;color:#111;">รายการ (Description)</th>
+                        <th style="padding:6px 10px;text-align:center;width:10%;font-size:${p.fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวน</th>
+                        <th style="padding:6px 10px;text-align:right;width:18%;font-size:${p.fs * 0.9}px;background:#f0f0f0;color:#111;">ราคา/หน่วย (บาท)</th>
+                        <th style="padding:6px 10px;text-align:right;width:18%;font-size:${p.fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวนเงิน (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHTML}</tbody>
+            </table>
+            ${footerHTML}
+        `;
+    }
+
     async function generateInvoicePDF(dayLog, config, startDate, dayOffset, invNum, overrides = {}) {
         const effectiveConfig = { ...config, ...overrides };
-        // Compute invoice date
         const dateObj = new Date(startDate.getTime() + (dayOffset * 24 * 60 * 60 * 1000));
         const dtStr = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
 
-        // Financials
         const grandTotalItemsValue = dayLog.items.reduce((sum, item) => sum + item.qty * item.price, 0);
         let subtotal, vatAmt, grandTotal;
         if (effectiveConfig.targetType === 'inclusive') {
@@ -525,7 +923,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const fmt = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        // Paper dimensions
         const paperPx = { a3: [1122, 1587], a4: [794, 1123], a5: [559, 794] };
         const paperMm = { a3: [297, 420], a4: [210, 297], a5: [148, 210] };
         const [pxW, pxH] = paperPx[config.paperSize];
@@ -533,123 +930,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const pad = Math.round(pxW * 0.05);
         const fs = config.paperSize === 'a3' ? 16 : config.paperSize === 'a5' ? 13 : 13;
 
-        // Build item rows HTML
-        const rowsHTML = dayLog.items.map((item, j) => {
-            const lineTotal = item.qty * item.price;
-            return `<tr>
-                <td style="text-align:center;padding:6px 10px;border-bottom:1px solid #e0e0e0;">${j + 1}</td>
-                <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;">${item.name}</td>
-                <td style="text-align:center;padding:6px 10px;border-bottom:1px solid #e0e0e0;">${item.qty}</td>
-                <td style="text-align:right;padding:6px 10px;border-bottom:1px solid #e0e0e0;">${fmt(item.price)}</td>
-                <td style="text-align:right;padding:6px 10px;border-bottom:1px solid #e0e0e0;">${fmt(lineTotal)}</td>
-            </tr>`;
-        }).join('');
+        const isFullForm = config.invoiceType === 'full';
+        const showVat = isFullForm ? true : !config.hideVat;
 
-        // Create off-screen container
-        const el = document.createElement('div');
-        el.style.cssText = `
-            position:fixed; left:-9999px; top:0;
-            width:${pxW}px; min-height:${pxH}px;
-            background:#fff; color:#111;
-            font-family:'Sarabun','Noto Sans Thai',sans-serif;
-            font-size:${fs}px; line-height:1.7;
-            padding:${pad}px; box-sizing:border-box;
-        `;
+        const itemsPerPage = getItemsPerPage(config.paperSize);
+        const totalPages = Math.ceil(dayLog.items.length / itemsPerPage) || 1;
 
-        el.innerHTML = `
-            <div style="text-align:center;margin-bottom:22px;">
-                <div style="font-size:${fs * 1.6}px;font-weight:700;letter-spacing:0.5px;">ใบกำกับภาษีอย่างย่อ / ใบเสร็จรับเงิน</div>
-                <div style="font-size:${fs * 1.2}px;font-weight:600;letter-spacing:2px;">TAX INVOICE / RECEIPT</div>
-            </div>
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: config.paperSize
+        });
 
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;">
-                <div style="flex:1;">
-                    <div style="font-weight:700;font-size:${fs * 1.3}px;margin-bottom:4px;">${config.compName}</div>
-                    <div>${config.compAddr.replace(/\n/g, '<br>')}</div>
-                    <div>เลขประจำตัวผู้เสียภาษี: ${config.compTax}</div>
-                    ${config.compBranch ? `<div>สาขา: ${config.compBranch}</div>` : ''}
-                    ${config.compPhone ? `<div>โทร: ${config.compPhone}</div>` : ''}
-                </div>
-                <div style="border:1px solid #bbb;padding:12px 16px;border-radius:8px;text-align:right;min-width:210px;">
-                    <div style="margin-bottom:4px;"><strong>เลขที่ (No.):</strong>&nbsp;${invNum}</div>
-                    <div><strong>วันที่ (Date):</strong>&nbsp;${dtStr}</div>
-                </div>
-            </div>
+        for (let page = 0; page < totalPages; page++) {
+            const pageNum = page + 1;
+            const isLastPage = pageNum === totalPages;
+            const pageItems = dayLog.items.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+            const startSeqNum = page * itemsPerPage + 1;
 
-            <hr style="border:none;border-top:2px solid #222;margin-bottom:14px;">
-
-            <div style="background:#f7f7f7;padding:10px 14px;border-radius:6px;margin-bottom:18px;">
-                <div><strong>ชื่อลูกค้า (Customer):</strong>&nbsp;${effectiveConfig.custName}</div>
-                ${effectiveConfig.custTax ? `<div><strong>เลขประจำตัวผู้เสียภาษี:</strong>&nbsp;${effectiveConfig.custTax}</div>` : ''}
-                ${effectiveConfig.custAddr ? `<div><strong>ที่อยู่ (Address):</strong>&nbsp;${effectiveConfig.custAddr.replace(/\n/g, '<br>')}</div>` : ''}
-            </div>
-
-            <table style="width:100%;border-collapse:collapse;border:1px solid #bbb;">
-                <thead>
-                    <tr>
-                        <th style="padding:9px 10px;text-align:center;width:7%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">ลำดับ</th>
-                        <th style="padding:9px 10px;text-align:left;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">รายการ (Description)</th>
-                        <th style="padding:9px 10px;text-align:center;width:10%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวน</th>
-                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">ราคา/หน่วย (บาท)</th>
-                        <th style="padding:9px 10px;text-align:right;width:18%;font-size:${fs * 0.9}px;background:#f0f0f0;color:#111;">จำนวนเงิน (บาท)</th>
-                    </tr>
-                </thead>
-                <tbody>${rowsHTML}</tbody>
-            </table>
-
-            <div style="display:flex;justify-content:flex-end;margin-top:18px;">
-                <table style="border-collapse:collapse;">
-                    ${!config.hideVat ? `
-                    <tr>
-                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">รวมเงิน (Sub Total):</td>
-                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;min-width:150px;">${fmt(subtotal)} บาท</td>
-                    </tr>
-                    ` : ''}
-                    ${!config.hideVat ? `
-                    <tr>
-                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">ภาษีมูลค่าเพิ่ม (VAT ${effectiveConfig.vatRate}%):</td>
-                        <td style="padding:5px 16px;text-align:right;border-bottom:1px solid #e0e0e0;">${fmt(vatAmt)} บาท</td>
-                    </tr>
-                    ` : ''}
-                    <tr style="background:#f0f0f0;">
-                        <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">จำนวนเงินรวมภาษีมูลค่าเพิ่มทั้งสื้น (Grand Total):</td>
-                        <td style="padding:8px 16px;text-align:right;font-weight:700;border-top:2px solid #222;">${fmt(grandTotal)} บาท</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div style="text-align:center;margin-top:70px;">
-                <div style="display:inline-block;border-top:1px solid #555;padding-top:10px;min-width:260px;">
-                    <div>ผู้มีอำนาจลงนาม / Authorized Signature</div>
-                    <div style="margin-top:4px;">วันที่ (Date): ____________</div>
-                </div>
-            </div>
-        `;
-
-
-        document.body.appendChild(el);
-        try {
-            await document.fonts.ready; // Ensure Sarabun is loaded before capture
-            const canvas = await html2canvas(el, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                width: pxW,
-                windowWidth: pxW
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position:fixed; left:-9999px; top:0;
+                width:${pxW}px; height:${pxH}px;
+                background:#fff; color:#111;
+                font-family:'Sarabun','Noto Sans Thai',sans-serif;
+                font-size:${fs}px; line-height:1.7;
+                padding:${pad}px; box-sizing:border-box;
+                overflow:hidden;
+            `;
+            el.innerHTML = buildPageHTML({
+                pageNum, totalPages, pageItems, startSeqNum, isLastPage,
+                config, effectiveConfig, dtStr, invNum,
+                subtotal, vatAmt, grandTotal, showVat, isFullForm,
+                fs, pad, pxW, pxH, fmt
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.93);
-
-            const doc = new window.jspdf.jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: config.paperSize
-            });
-            doc.addImage(imgData, 'JPEG', 0, 0, mmW, mmH);
-            return doc.output('blob');
-        } finally {
-            document.body.removeChild(el);
+            document.body.appendChild(el);
+            try {
+                await document.fonts.ready;
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: pxW,
+                    windowWidth: pxW
+                });
+                const imgData = canvas.toDataURL('image/jpeg', 0.93);
+                if (page > 0) doc.addPage();
+                doc.addImage(imgData, 'JPEG', 0, 0, mmW, mmH);
+            } finally {
+                document.body.removeChild(el);
+            }
         }
+
+        return doc.output('blob');
     }
 });

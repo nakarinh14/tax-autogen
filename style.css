@@ -128,6 +128,7 @@ body {
 .mt-6 { margin-top: 1.5rem; }
 .mt-8 { margin-top: 2rem; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
+.btn-row { display: flex; gap: 0.5rem; }
 
 /* Forms */
 .form-group {

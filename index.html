@@ -25,7 +25,7 @@
             <p data-i18n="app_desc">Smart PDF generator to strictly match target sales sums.</p>
         </header>
 
-        <form id="generator-form">
+        <form id="generator-form" novalidate>
             <div class="grid-2">
                 <!-- Company Details -->
                 <section class="card glass">
@@ -36,15 +36,23 @@
                     </div>
                     <div class="form-group">
                         <label for="comp-tax" data-i18n="comp_tax">Tax ID</label>
-                        <input type="text" id="comp-tax" required placeholder="13-digit Tax ID">
+                        <input type="text" id="comp-tax" required pattern="\d{13}" maxlength="13" placeholder="13-digit Tax ID">
                     </div>
                     <div class="form-group">
                         <label for="comp-addr" data-i18n="comp_addr">Address</label>
                         <textarea id="comp-addr" rows="2" required placeholder="Full company address..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="comp-branch" data-i18n="comp_branch">Branch (optional)</label>
-                        <input type="text" id="comp-branch" placeholder="e.g. สำนักงานใหญ่">
+                        <label for="comp-branch-type" data-i18n="branch_type">Branch Type</label>
+                        <select id="comp-branch-type">
+                            <option value="" data-i18n="branch_none">— None —</option>
+                            <option value="head" data-i18n="branch_head">Head Office (สำนักงานใหญ่)</option>
+                            <option value="branch" data-i18n="branch_br">Branch (สาขา)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="comp-branch-no-group" style="display:none;">
+                        <label for="comp-branch-no" data-i18n="branch_no">Branch No. (5-digit)</label>
+                        <input type="text" id="comp-branch-no" pattern="\d{5}" maxlength="5" placeholder="e.g. 00001">
                     </div>
                     <div class="form-group">
                         <label for="comp-phone" data-i18n="comp_phone">Phone Number (optional)</label>
@@ -61,11 +69,23 @@
                     </div>
                     <div class="form-group">
                         <label for="cust-tax" data-i18n="cust_tax">Tax ID (optional)</label>
-                        <input type="text" id="cust-tax" placeholder="13-digit Tax ID">
+                        <input type="text" id="cust-tax" pattern="\d{13}" maxlength="13" placeholder="13-digit Tax ID">
                     </div>
                     <div class="form-group">
                         <label for="cust-addr" data-i18n="cust_addr">Address (optional)</label>
                         <textarea id="cust-addr" rows="2" placeholder="Customer address..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-branch-type" data-i18n="branch_type">Branch Type</label>
+                        <select id="cust-branch-type">
+                            <option value="" data-i18n="branch_none">— None —</option>
+                            <option value="head" data-i18n="branch_head">Head Office (สำนักงานใหญ่)</option>
+                            <option value="branch" data-i18n="branch_br">Branch (สาขา)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="cust-branch-no-group" style="display:none;">
+                        <label for="cust-branch-no" data-i18n="branch_no">Branch No. (5-digit)</label>
+                        <input type="text" id="cust-branch-no" pattern="\d{5}" maxlength="5" placeholder="e.g. 00001">
                     </div>
                 </section>
             </div>
@@ -96,6 +116,14 @@
                     <div class="form-group">
                         <label for="vat-rate" data-i18n="vat_rate">VAT Rate (%)</label>
                         <input type="number" id="vat-rate" value="7" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="invoice-type" data-i18n="invoice_type">Tax Invoice Type</label>
+                        <select id="invoice-type">
+                            <option value="abbreviated" selected data-i18n="inv_type_abbr">Abbreviated (ใบกำกับภาษีอย่างย่อ)</option>
+                            <option value="full" data-i18n="inv_type_full">Full Form (ใบกำกับภาษีเต็มรูปแบบ)</option>
+                        </select>
+                        <small class="helper-text" style="display:block;margin-top:4px;" data-i18n="inv_type_hint">Abbreviated: for retail/consumer. Full Form: for business VAT credit.</small>
                     </div>
                     <div class="form-group">
                         <label for="max-qty" data-i18n="max_qty">Max Items Per Day</label>
@@ -132,13 +160,19 @@
             <section class="card glass mt-6">
                 <div class="flex-between">
                     <h2 data-i18n="fixed_item_list">Fixed Item List</h2>
-                    <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm" data-i18n="btn_add_item">+ Add Item</button>
+                    <div class="btn-row">
+                        <button type="button" id="btn-download-template" class="btn btn-secondary btn-sm" data-i18n="btn_download_template">Download Template</button>
+                        <button type="button" id="btn-import-excel" class="btn btn-secondary btn-sm" data-i18n="btn_import_excel">Import Excel</button>
+                        <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm" data-i18n="btn_add_item">+ Add Item</button>
+                    </div>
+                    <input type="file" id="file-excel-input" accept=".xlsx,.xls" style="display:none;">
                 </div>
                 <div class="table-container mt-4">
                     <table class="items-table" id="items-table">
                         <thead>
                             <tr>
                                 <th data-i18n="th_item_desc">Item Description</th>
+                                <th width="80" data-i18n="th_qty">Qty</th>
                                 <th width="150" data-i18n="th_unit_price">Unit Price (Baht)</th>
                                 <th width="60"></th>
                             </tr>
@@ -188,6 +222,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     
     <script src="main.js?v=2"></script>
 </body>
