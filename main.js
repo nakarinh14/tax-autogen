@@ -62,7 +62,11 @@ const translations = {
         branch_head: "Head Office (สำนักงานใหญ่)",
         branch_br: "Branch (สาขา)",
         branch_no: "Branch No. (5-digit)",
-        adhoc_same_cust: "Same customer as main form"
+        adhoc_same_cust: "Same customer as main form",
+        use_delivery_note: "Generate as Delivery Note / Invoice / Tax Invoice (ใบส่งของ / ใบแจ้งหนี้ / ใบกำกับภาษี)",
+        receipt_mode: "Receipt Only (ใบเสร็จรับเงิน)",
+        source_inv_num: "Source Tax Invoice No. (อ้างอิงใบกำกับภาษีต้นทาง)",
+        receipt_date: "Receipt Date (วันที่รับเงิน)"
     },
     th: {
         app_title: "โปรแกรมสร้างใบกำกับภาษีอัตโนมัติ",
@@ -125,7 +129,11 @@ const translations = {
         branch_head: "สำนักงานใหญ่",
         branch_br: "สาขา",
         branch_no: "เลขที่สาขา (5 หลัก)",
-        adhoc_same_cust: "ข้อมูลลูกค้าเหมือนกับฟอร์มหลัก"
+        adhoc_same_cust: "ข้อมูลลูกค้าเหมือนกับฟอร์มหลัก",
+        use_delivery_note: "ใช้เป็นใบส่งของ / ใบแจ้งหนี้ / ใบกำกับภาษี",
+        receipt_mode: "ใบเสร็จรับเงินเท่านั้น",
+        source_inv_num: "อ้างอิงใบกำกับภาษีต้นทางเลขที่",
+        receipt_date: "วันที่รับเงิน"
     }
 };
 
@@ -183,6 +191,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applyTranslations();
 
+    const FORM_KEY = 'tax-autogen-form';
+    function saveFormState() {
+        const data = {};
+        document.querySelectorAll('#generator-form input[type="text"], #generator-form input[type="number"], #generator-form input[type="tel"], #generator-form textarea, #generator-form select').forEach(el => {
+            if (el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+        });
+        data._mode = currentMode;
+        data._lang = currentLang;
+        try { localStorage.setItem(FORM_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+    function restoreFormState() {
+        try {
+            const raw = localStorage.getItem(FORM_KEY);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            Object.keys(data).forEach(key => {
+                if (key.startsWith('_')) return;
+                const el = document.getElementById(key);
+                if (!el) return;
+                if (el.type === 'checkbox') el.checked = data[key];
+                else el.value = data[key];
+            });
+            if (data._mode && data._mode !== currentMode) setMode(data._mode);
+            if (data._lang && data._lang !== currentLang) {
+                currentLang = data._lang;
+                updateCustTaxLabel();
+                applyTranslations();
+            }
+        } catch(e) {}
+    }
+    document.getElementById('generator-form').addEventListener('change', saveFormState);
+    document.getElementById('generator-form').addEventListener('input', saveFormState);
+
     const btnLangToggle = document.getElementById('btn-lang-toggle');
     if (btnLangToggle) {
         btnLangToggle.addEventListener('click', () => {
@@ -190,6 +231,51 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCustTaxLabel();
             applyTranslations();
         });
+    }
+
+    let currentMode = 'invoice';
+    const dateStartLabel = document.querySelector('label[for="date-start"]');
+    const modeBtnInvoice = document.getElementById('mode-invoice');
+    const modeBtnReceipt = document.getElementById('mode-receipt');
+    const requireDailyCheckbox = document.getElementById('require-daily');
+
+    function refreshRequireDailyFields() {
+        if (!requireDailyCheckbox) return;
+        const enabled = requireDailyCheckbox.checked && currentMode === 'invoice';
+        document.querySelectorAll('.require-daily-field').forEach(el => {
+            el.style.opacity = enabled ? '' : '0.5';
+            el.style.pointerEvents = enabled ? '' : 'none';
+            el.querySelectorAll('input, select, textarea').forEach(input => {
+                input.disabled = !enabled;
+                if (!enabled) input.value = '';
+            });
+        });
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.inv-only').forEach(el => { el.style.display = mode === 'invoice' ? '' : 'none'; });
+        document.querySelectorAll('.rec-only').forEach(el => { el.style.display = mode === 'receipt' ? '' : 'none'; });
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        if (mode === 'invoice') {
+            modeBtnInvoice.classList.add('active');
+            if (dateStartLabel) dateStartLabel.setAttribute('data-i18n', 'start_date');
+        } else {
+            modeBtnReceipt.classList.add('active');
+            if (dateStartLabel) dateStartLabel.setAttribute('data-i18n', 'receipt_date');
+        }
+        applyTranslations();
+        refreshRequireDailyFields();
+    }
+
+    if (modeBtnInvoice && modeBtnReceipt) {
+        modeBtnInvoice.addEventListener('click', () => setMode('invoice'));
+        modeBtnReceipt.addEventListener('click', () => setMode('receipt'));
+        setMode('invoice');
+    }
+
+    if (requireDailyCheckbox) {
+        requireDailyCheckbox.addEventListener('change', refreshRequireDailyFields);
     }
 
     const today = new Date();
@@ -235,6 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCustTaxLabel();
         applyTranslations();
     });
+
+    restoreFormState();
 
     const statusContainer = document.getElementById('status-container');
     const statusText = document.getElementById('status-text');
@@ -545,6 +633,9 @@ document.addEventListener('DOMContentLoaded', () => {
             maxQty: parseInt(document.getElementById('max-qty').value),
             requireDaily: document.getElementById('require-daily').checked,
             hideVat: document.getElementById('hide-vat').checked,
+            useDeliveryNote: document.getElementById('use-delivery-note').checked,
+            receiptMode: currentMode === 'receipt',
+            sourceInvNum: document.getElementById('source-inv-num').value,
             paperSize: document.getElementById('paper-size').value, // 'a3' or 'a4'
             useDateInv: document.getElementById('use-date-inv').checked,
             invStartNum: parseInt(document.getElementById('inv-start-num').value),
@@ -555,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }))
         };
 
-        if (config.startDate > config.endDate) {
+        if (config.requireDaily && config.startDate > config.endDate) {
             alert('Start date must be before or equal to End date.');
             return;
         }
@@ -565,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const isFullForm = config.invoiceType === 'full';
-        if (isFullForm && config.custTax.length !== 13) {
+        if (config.requireDaily && isFullForm && config.custTax.length !== 13) {
             alert('Customer Tax ID is required and must be exactly 13 digits for Full Form tax invoices.');
             return;
         }
@@ -576,25 +667,41 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGen.innerText = "Please wait...";
         progressFill.style.width = '0%';
         statusPct.innerText = '0%';
-        statusText.innerText = 'Distributing exact items...';
+        statusText.innerText = config.receiptMode ? 'Generating receipt...' : (config.requireDaily ? 'Distributing exact items...' : 'Generating invoices...');
         statusContainer.classList.remove('hidden');
 
         // Allow UI to update
         await new Promise(r => setTimeout(r, 100));
 
         try {
+            const isReceipt = config.receiptMode;
+            if (isReceipt) {
+                config.endDate = config.startDate;
+            }
+
             // 1. Math Distribution (only if fixed items exist)
             const hasFixedItems = config.items.some(it => it.name && it.price > 0);
             const adhocCards = document.querySelectorAll('.adhoc-card');
 
-            if (!hasFixedItems && adhocCards.length === 0) {
+            if (!isReceipt && !hasFixedItems && adhocCards.length === 0) {
                 throw new Error('No items to generate. Please add items to the Fixed Item List or create an ad-hoc invoice.');
             }
 
             // 2. Prepare all invoice jobs
             let invoiceJobs = [];
 
-            if (hasFixedItems) {
+            if (isReceipt) {
+                const daysCount = Math.floor((config.endDate - config.startDate) / (1000 * 60 * 60 * 24)) + 1;
+                const perDayAmount = config.targetMoney / daysCount;
+                for (let d = 0; d < daysCount; d++) {
+                    const jobDate = new Date(config.startDate.getTime() + (d * 24 * 60 * 60 * 1000));
+                    invoiceJobs.push({
+                        date: jobDate,
+                        dayLog: { items: [{ name: 'รับชำระ', qty: 1, price: perDayAmount }] },
+                        overrides: {}
+                    });
+                }
+            } else if (hasFixedItems) {
                 statusText.innerText = 'Distributing exact items...';
                 await new Promise(r => setTimeout(r, 10));
 
@@ -617,8 +724,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Collect ad-hoc invoices (excluded from monthly target)
-            for (let ai = 0; ai < adhocCards.length; ai++) {
+            if (!isReceipt) {
+                // Collect ad-hoc invoices (excluded from monthly target)
+                for (let ai = 0; ai < adhocCards.length; ai++) {
                 const card = adhocCards[ai];
                 const dateVal = card.querySelector('.adhoc-date').value;
                 if (!dateVal) throw new Error(`Ad-hoc invoice #${ai + 1} is missing a date.`);
@@ -649,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     })()
                 });
             }
+            }
 
             // Sort all jobs chronologically by date
             invoiceJobs.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -669,21 +778,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusText.innerText = `Generating PDF ${i + 1} of ${invoiceJobs.length}...`;
                 await new Promise(r => setTimeout(r, 10)); // Yield for UI
 
+                let prefix = config.receiptMode ? 'RC-' : '';
                 let invNumber;
                 if (job.isAdhoc) {
                     const yyyy = job.date.getFullYear();
                     const mm = String(job.date.getMonth() + 1).padStart(2, '0');
                     const dd = String(job.date.getDate()).padStart(2, '0');
                     const dateKey = `${yyyy}${mm}${dd}`;
+                    const adhocPrefix = config.receiptMode ? 'RC-' : 'WH-';
                     if (config.useDateInv) {
                         if (adhocDateSeq[dateKey] === undefined) adhocDateSeq[dateKey] = 1;
-                        invNumber = `WH-${dateKey}-${String(adhocDateSeq[dateKey]).padStart(4, '0')}`;
+                        invNumber = `${adhocPrefix}${dateKey}-${String(adhocDateSeq[dateKey]).padStart(4, '0')}`;
                         adhocDateSeq[dateKey]++;
                     } else {
-                        invNumber = `WH-${adhocCounter}`;
+                        invNumber = `${adhocPrefix}${adhocCounter}`;
                         adhocCounter++;
                     }
                 } else {
+                    const mainPrefix = config.receiptMode ? 'RC-' : 'TX-';
                     if (config.useDateInv) {
                         const yyyy = job.date.getFullYear();
                         const mm = String(job.date.getMonth() + 1).padStart(2, '0');
@@ -694,10 +806,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             runningDateInvNum = dateAsNum;
                         }
                         
-                        invNumber = `TX-${runningDateInvNum}`;
+                        invNumber = `${mainPrefix}${runningDateInvNum}`;
                         runningDateInvNum++;
                     } else {
-                        invNumber = `TX-${invCounter}`;
+                        invNumber = `${mainPrefix}${invCounter}`;
                         invCounter++;
                     }
                 }
@@ -708,7 +820,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             statusText.innerText = 'Zipping files...';
             const zipBlob = await zip.generateAsync({ type: "blob" });
-            saveAs(zipBlob, `Tax_Invoices_${config.startDate.toISOString().split('T')[0]}_to_${config.endDate.toISOString().split('T')[0]}.zip`);
+            const d1 = isNaN(config.startDate.getTime()) ? 'unknown' : config.startDate.toISOString().split('T')[0];
+            const d2 = isNaN(config.endDate.getTime()) ? 'unknown' : config.endDate.toISOString().split('T')[0];
+            saveAs(zipBlob, `Tax_Invoices_${d1}_to_${d2}.zip`);
 
             statusText.innerText = 'Done!';
         } catch (err) {
@@ -803,11 +917,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function buildReceiptHTML(p) {
+        const titleThai = 'ใบเสร็จรับเงิน';
+        const titleEng = 'RECEIPT';
+
+        const pageIndicator = p.totalPages > 1
+            ? ` (หน้า ${p.pageNum}/${p.totalPages})`
+            : '';
+
+        return `
+            <div style="text-align:center;margin-bottom:14px;">
+                <div style="font-size:${p.fs * 2.0}px;font-weight:700;letter-spacing:0.5px;">${titleThai}</div>
+                <div style="font-size:${p.fs * 1.4}px;font-weight:600;letter-spacing:2px;">${titleEng}</div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:16px;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:${p.fs * 1.2}px;margin-bottom:4px;border-bottom:1px solid #555;padding-bottom:4px;">ผู้รับเงิน (Supplier)</div>
+                    <div style="margin-top:4px;">${p.effectiveConfig.custName}</div>
+                    ${p.effectiveConfig.custAddr ? `<div>${p.effectiveConfig.custAddr.replace(/\n/g, '<br>')}</div>` : ''}
+                    ${p.effectiveConfig.custTax ? `<div>เลขประจำตัวผู้เสียภาษี: ${formatTaxId(p.effectiveConfig.custTax)}</div>` : ''}
+                    ${p.effectiveConfig.custBranchType === 'head' ? '<div>สำนักงานใหญ่</div>' : ''}
+                    ${p.effectiveConfig.custBranchType === 'branch' ? `<div>สาขาที่ ${p.effectiveConfig.custBranchNo || '00000'}</div>` : ''}
+                </div>
+                <div style="border:1px solid #bbb;padding:10px 14px;border-radius:8px;text-align:right;min-width:210px;">
+                    <div style="margin-bottom:4px;"><strong>เลขที่ (No.):</strong>&nbsp;${p.invNum}${pageIndicator}</div>
+                    <div><strong>วันที่รับเงิน (Date):</strong>&nbsp;${p.dtStr}</div>
+                </div>
+            </div>
+
+            <div style="background:#f7f7f7;padding:8px 14px;border-radius:6px;margin-bottom:12px;">
+                <div style="font-weight:700;font-size:${p.fs * 1.15}px;margin-bottom:4px;border-bottom:1px solid #555;padding-bottom:4px;">ผู้จ่ายเงิน (Payer)</div>
+                <div style="margin-top:4px;"><strong>ชื่อบริษัท:</strong>&nbsp;${p.config.compName}</div>
+                <div><strong>ที่อยู่:</strong>&nbsp;${p.config.compAddr.replace(/\n/g, '<br>')}</div>
+            </div>
+
+            <hr style="border:none;border-top:2px solid #222;margin-bottom:12px;">
+
+            <div style="text-align:center;margin-bottom:8px;">
+                <div style="font-size:${p.fs * 1.3}px;font-weight:700;">รายละเอียดการรับเงิน</div>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;border:1px solid #bbb;margin-bottom:16px;">
+                <tr>
+                    <td style="padding:10px 14px;width:50%;border-bottom:1px solid #e0e0e0;background:#f9f9f9;"><strong>อ้างอิงใบกำกับภาษีเลขที่:</strong></td>
+                    <td style="padding:10px 14px;width:50%;border-bottom:1px solid #e0e0e0;">${p.config.sourceInvNum || '—'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 14px;background:#f9f9f9;"><strong>จำนวนเงินที่รับชำระ:</strong></td>
+                    <td style="padding:12px 14px;font-size:${p.fs * 1.2}px;font-weight:700;">${p.fmt(p.grandTotal)} บาท</td>
+                </tr>
+            </table>
+
+            <div style="text-align:center;margin-top:60px;">
+                <div style="display:inline-block;border-top:1px solid #555;padding-top:10px;min-width:260px;">
+                    <div>ผู้มีอำนาจลงนาม / Authorized Signature</div>
+                    <div style="margin-top:4px;">วันที่ (Date): ____________</div>
+                </div>
+            </div>`;
+    }
+
     function buildPageHTML(p) {
-        const titleThai = p.isFullForm
-            ? 'ใบกำกับภาษีเต็มรูปแบบ / ใบเสร็จรับเงิน'
-            : 'ใบกำกับภาษีอย่างย่อ / ใบเสร็จรับเงิน';
-        const titleEng = 'TAX INVOICE / RECEIPT';
+        let titleThai, titleEng;
+        if (p.config.useDeliveryNote) {
+            titleThai = 'ใบส่งของ / ใบแจ้งหนี้ / ใบกำกับภาษี';
+            titleEng = 'DELIVERY ORDER / INVOICE / TAX INVOICE';
+        } else {
+            titleThai = p.isFullForm
+                ? 'ใบกำกับภาษีเต็มรูปแบบ / ใบเสร็จรับเงิน'
+                : 'ใบกำกับภาษีอย่างย่อ / ใบเสร็จรับเงิน';
+            titleEng = 'TAX INVOICE / RECEIPT';
+        }
 
         const pageIndicator = p.totalPages > 1 
             ? ` (หน้า ${p.pageNum}/${p.totalPages})`
@@ -850,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </tr>
                     </table>
                 </div>
-                <div style="text-align:center;margin-top:18px;">
+                <div style="text-align:center;margin-top:60px;">
                     <div style="display:inline-block;border-top:1px solid #555;padding-top:10px;min-width:260px;">
                         <div>ผู้มีอำนาจลงนาม / Authorized Signature</div>
                         <div style="margin-top:4px;">วันที่ (Date): ____________</div>
@@ -932,9 +1112,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isFullForm = config.invoiceType === 'full';
         const showVat = isFullForm ? true : !config.hideVat;
+        const isReceipt = config.receiptMode;
 
         const itemsPerPage = getItemsPerPage(config.paperSize);
-        const totalPages = Math.ceil(dayLog.items.length / itemsPerPage) || 1;
+        const totalPages = isReceipt ? 1 : (Math.ceil(dayLog.items.length / itemsPerPage) || 1);
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
@@ -943,7 +1124,41 @@ document.addEventListener('DOMContentLoaded', () => {
             format: config.paperSize
         });
 
-        for (let page = 0; page < totalPages; page++) {
+        if (isReceipt) {
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position:fixed; left:-9999px; top:0;
+                width:${pxW}px; height:${pxH}px;
+                background:#fff; color:#111;
+                font-family:'Sarabun','Noto Sans Thai',sans-serif;
+                font-size:${fs}px; line-height:1.7;
+                padding:${pad}px; box-sizing:border-box;
+                overflow:hidden;
+            `;
+            el.innerHTML = buildReceiptHTML({
+                config, effectiveConfig, dtStr, invNum,
+                grandTotal, fmt, fs, pad, pxW, pxH,
+                totalPages: 1, pageNum: 1, isLastPage: true
+            });
+
+            document.body.appendChild(el);
+            try {
+                await document.fonts.ready;
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: pxW,
+                    windowWidth: pxW
+                });
+                const imgData = canvas.toDataURL('image/jpeg', 0.93);
+                doc.addImage(imgData, 'JPEG', 0, 0, mmW, mmH);
+            } finally {
+                document.body.removeChild(el);
+            }
+        } else {
+            for (let page = 0; page < totalPages; page++) {
             const pageNum = page + 1;
             const isLastPage = pageNum === totalPages;
             const pageItems = dayLog.items.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
@@ -983,6 +1198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 document.body.removeChild(el);
             }
+        }
+
         }
 
         return doc.output('blob');
